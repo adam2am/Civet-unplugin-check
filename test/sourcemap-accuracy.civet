@@ -1,0 +1,107 @@
+{compile} from ../source/main.civet
+assert from assert
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { SourceMapConsumer } from 'source-map'
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+describe "source map accuracy", ->
+  it "should map variables back to original Civet lines and columns", ->
+    // Define the simple Civet code to be tested
+    civetCode := `
+// Line 1: This is a comment, actual code starts on the next line
+firstVar := 123 // Original Line 2
+
+// Line 4: Another comment
+secondVar := firstVar + 7 // Original Line 5
+
+// Line 7: A comment
+console.log secondVar, "is the value" // Original Line 8
+
+// Line 10: Conditional Test
+num := 10 // Original Line 11
+isPositive := if num > 0 // Original Line 12
+  "yes" // Original Line 13
+else // Original Line 14
+  "no" // Original Line 15
+console.log isPositive // Original Line 16
+
+// Line 18: Loop Test
+items := [] // Original Line 19
+for x of [1..2] // Original Line 20
+  items.push x // Original Line 21
+console.log items // Original Line 22
+`
+    sourceFilename := 'test-snippet.civet' // Virtual filename for the snippet
+
+    // Compile with sourcemap enabled
+    result := compile(civetCode, {
+      sync: true
+      sourceMap: true
+      js: false // Assuming TS-like output for mapping
+      filename: sourceFilename
+    })
+    tsCode := result.code
+    mapJson := result.sourceMap.json()
+
+    // Patch sources and sourcesContent if necessary
+    if !mapJson.sources || !mapJson.sources[0]
+      mapJson.sources = [sourceFilename]
+    
+    mapJson.sourcesContent = mapJson.sourcesContent || [civetCode]
+
+    // Split TS code into lines for lookup
+    tsLines := tsCode.split('\\n')
+
+    await SourceMapConsumer.with mapJson, null, async (consumer) =>
+      // Helper to test a token
+      testToken := (token, expectedOriginalLine) ->
+        lineIndex := tsLines.findIndex (l) => l.includes(token)
+        assert lineIndex >= 0, `Token '${token}' not found in compiled TS code. Compiled output:\\n${tsCode}`
+        
+        columnIndex := tsLines[lineIndex].indexOf(token)
+        assert columnIndex >= 0, `Token '${token}' not found on compiled line ${lineIndex + 1}: '${tsLines[lineIndex]}'`
+
+        orig := consumer.originalPositionFor({ line: lineIndex + 1, column: columnIndex })
+        
+        assert.ok orig.line != null, `Original line for '${token}' (compiled line ${lineIndex+1}, col ${columnIndex}) should not be null. Mapping: ${JSON.stringify(orig)}`
+        assert.ok orig.column != null, `Original column for '${token}' (compiled line ${lineIndex+1}, col ${columnIndex}) should not be null. Mapping: ${JSON.stringify(orig)}`
+
+        originalCodeLines := civetCode.split('\\n')
+        assert.strictEqual orig.line, expectedOriginalLine,
+          `Expected '${token}' to map to original line ${expectedOriginalLine}, got ${orig.line}. Compiled: '${tsLines[lineIndex]}'. Original line ${expectedOriginalLine}: '${originalCodeLines[expectedOriginalLine-1]}'`
+        
+        expectedOriginalColumn := originalCodeLines[expectedOriginalLine - 1].indexOf(token)
+        assert.strictEqual orig.column, expectedOriginalColumn,
+          `Expected '${token}' to map to original column ${expectedOriginalColumn} on line ${expectedOriginalLine}, got ${orig.column}. Original line content: '${originalCodeLines[expectedOriginalLine-1]}'`
+
+      // Verify mapping for firstVar (original line 2 of the civetCode string snippet)
+      testToken('firstVar', 2)
+
+      // Verify mapping for secondVar (original line 5 of the civetCode string snippet)
+      testToken('secondVar', 5)
+
+      // Verify mapping for console.log (original line 8 of the civetCode string snippet)
+      testToken('console.log', 8)
+
+      // Verify mapping for string literal (original line 8 of the civetCode string snippet)
+      testToken('"is the value"', 8)
+
+      // Conditional Tests (lines relative to civetCode string)
+      testToken('num', 11) // Declaration of num
+      testToken('isPositive', 12) // Declaration of isPositive
+      testToken('num', 12) // Usage of num in if condition
+      testToken('"yes"', 13)
+      testToken('"no"', 15)
+      testToken('isPositive', 16) // Usage of isPositive in console.log
+
+      // Loop Tests (lines relative to civetCode string)
+      testToken('items', 19) // Declaration of items array
+      testToken('x', 20) // Loop variable x in for statement
+      testToken('items.push', 21) // items.push inside loop
+      testToken('x', 21) // Usage of x inside loop
+      testToken('items', 22) // Usage of items in console.log
