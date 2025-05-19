@@ -4,27 +4,40 @@ Testing with library: source-map
 
 
 
---- BEGIN SCENARIO: Simple Variable Declaration ---
+--- BEGIN SCENARIO: Microtest3: inputPos and srcLine Synchronization ---
 Input Civet Code:
-// Civet Line 1
-myVar := 123 // Civet Line 2
-another := "text" // Civet Line 3
+// Civet L1
+// Civet L2: tokenA then tokenB on the same line
+first tokenA; second tokenB // Civet L3
+// Civet L4
+// Civet L5: call funcC
+// Civet L6: call funcD on next line
+call funcC
+call funcD
+
 
 Generated TypeScript Code:
-// Civet Line 1
-const myVar = 123 // Civet Line 2
-const another = "text" // Civet Line 3
+// Civet L1
+// Civet L2: tokenA then tokenB on the same line
+first(tokenA); second(tokenB) // Civet L3
+// Civet L4
+// Civet L5: call funcC
+// Civet L6: call funcD on next line
+call(funcC)
+call(funcD)
+
 
 Generated Sourcemap JSON:
 {
   "version": 3,
+  "file": "Microtest3: inputPos and srcLine Synchronization.js",
   "sources": [
-    null
+    "Microtest3: inputPos and srcLine Synchronization.civet"
   ],
-  "mappings": "AAAA,eAAe;AACf,AAAK,MAAL,KAAK,CAAC,CAAE,CAAC,GAAG,CAAC,eAAe;AAC5B,AAAA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,MAAM,CAAC",
+  "mappings": "AAAA,WAAW;AACX,AAAA,gDAAgD;AAChD,AAAA,KAAK,CAAA,AAAC,MAAM,CAAA,CAAC,CAAC,MAAM,CAAA,AAAC,MAAM,CAAA,CAAC,WAAW;AACvC,AAAA,WAAW;AACX,AAAA,uBAAuB;AACvB,AAAA,oCAAoC;AACpC,AAAA,AAAA,IAAI,CAAA,AAAC,KAAK,CAAA;AACV,AAAA,AAAA,IAAI,CAAA,AAAC,KAAK,CAAA;AACV",
   "names": [],
   "sourcesContent": [
-    "// Civet Line 1\nmyVar := 123 // Civet Line 2\nanother := \"text\" // Civet Line 3"
+    "// Civet L1\n// Civet L2: tokenA then tokenB on the same line\nfirst tokenA; second tokenB // Civet L3\n// Civet L4\n// Civet L5: call funcC\n// Civet L6: call funcD on next line\ncall funcC\ncall funcD\n"
   ]
 }
 
@@ -32,431 +45,124 @@ SCENARIO OVERALL STATUS: ✅ PASSED
 
 --- TOKEN MAPPING VERIFICATION ---
 
---- Testing Token: 'myVar keyword' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Simple Variable Declaration.civet').
-  Target Generated  : TS Line 2, Col 6
-  Expected Original : Civet Line 2, Col 0
-  Actual Mapped     : Civet Line 2, Col 0 (Source: undefined)
+--- Testing Token: 'L3 tokenA' (with source-map) ---
+  Target Generated  : TS Line 3, Col 7
+  Expected Original : Civet Line 3, Col 6
+  Actual Mapped     : Civet Line 3, Col 6 (Source: Microtest3: inputPos and srcLine Synchronization.civet)
   Status            : PASSED
---- End Token: 'myVar keyword' ---
+--- End Token: 'L3 tokenA' ---
 
---- Testing Token: '123 literal' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Simple Variable Declaration.civet').
-  Target Generated  : TS Line 2, Col 14
-  Expected Original : Civet Line 2, Col 9
-  Actual Mapped     : Civet Line 2, Col 9 (Source: undefined)
+--- Testing Token: 'L3 tokenB' (with source-map) ---
+  Target Generated  : TS Line 3, Col 25
+  Expected Original : Civet Line 3, Col 21
+  Actual Mapped     : Civet Line 3, Col 21 (Source: Microtest3: inputPos and srcLine Synchronization.civet)
   Status            : PASSED
---- End Token: '123 literal' ---
+--- End Token: 'L3 tokenB' ---
 
---- Testing Token: 'another keyword' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Simple Variable Declaration.civet').
-  Target Generated  : TS Line 3, Col 6
-  Expected Original : Civet Line 3, Col 0
-  Actual Mapped     : Civet Line 3, Col 0 (Source: undefined)
+--- Testing Token: 'L6 funcC' (with source-map) ---
+  Target Generated  : TS Line 6, Col 5
+  Expected Original : Civet Line 6, Col 0
+  Actual Mapped     : Civet Line 6, Col 0 (Source: Microtest3: inputPos and srcLine Synchronization.civet)
   Status            : PASSED
---- End Token: 'another keyword' ---
+--- End Token: 'L6 funcC' ---
 
---- Testing Token: '"text" literal' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Simple Variable Declaration.civet').
-  Target Generated  : TS Line 3, Col 16
-  Expected Original : Civet Line 3, Col 11
-  Actual Mapped     : Civet Line 3, Col 11 (Source: undefined)
+--- Testing Token: 'L7 funcD' (with source-map) ---
+  Target Generated  : TS Line 7, Col 5
+  Expected Original : Civet Line 7, Col 5
+  Actual Mapped     : Civet Line 7, Col 5 (Source: Microtest3: inputPos and srcLine Synchronization.civet)
   Status            : PASSED
---- End Token: '"text" literal' ---
---- END SCENARIO: Simple Variable Declaration ---
+--- End Token: 'L7 funcD' ---
+--- END SCENARIO: Microtest3: inputPos and srcLine Synchronization ---
 
 
 
---- BEGIN SCENARIO: Variable Reassignment and Expressions ---
-Input Civet Code:
-// Civet Line 1
-count := 0 // Civet Line 2
-result := count * 2 // Civet Line 3
+[MAP-DEBUG] inputPos: 0 → rawLine,rawCol: 0 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[0]: genCol:0, srcFileIdx:0, absOrigLine:0, absOrigCol:0
+[MAP-DEBUG] inputPos: 11 → rawLine,rawCol: 0 11 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[0]: genCol:11, srcFileIdx:0, absOrigLine:0, absOrigCol:11
+[MAP-DEBUG] Pushing to @lines[1]: genCol:0, srcFileIdx:0, absOrigLine:1, absOrigCol:0
+[MAP-DEBUG] inputPos: 12 → rawLine,rawCol: 1 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[1]: genCol:0, srcFileIdx:0, absOrigLine:1, absOrigCol:0
+[MAP-DEBUG] inputPos: 60 → rawLine,rawCol: 1 48 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[1]: genCol:48, srcFileIdx:0, absOrigLine:1, absOrigCol:48
+[MAP-DEBUG] Pushing to @lines[2]: genCol:0, srcFileIdx:0, absOrigLine:2, absOrigCol:0
+[MAP-DEBUG] inputPos: 61 → rawLine,rawCol: 2 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:0, srcFileIdx:0, absOrigLine:2, absOrigCol:0
+[MAP-DEBUG] inputPos: 66 → rawLine,rawCol: 2 5 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:5, srcFileIdx:0, absOrigLine:2, absOrigCol:5
+[MAP-DEBUG] inputPos: 66 → rawLine,rawCol: 2 5 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:5
+[MAP-DEBUG] inputPos: 67 → rawLine,rawCol: 2 6 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:0, srcFileIdx:0, absOrigLine:2, absOrigCol:6
+[MAP-DEBUG] inputPos: 73 → rawLine,rawCol: 2 12 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:6, srcFileIdx:0, absOrigLine:2, absOrigCol:12
+[MAP-DEBUG] inputPos: 73 → rawLine,rawCol: 2 12 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:12
+[MAP-DEBUG] inputPos: 74 → rawLine,rawCol: 2 13 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:13
+[MAP-DEBUG] inputPos: 75 → rawLine,rawCol: 2 14 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:14
+[MAP-DEBUG] inputPos: 81 → rawLine,rawCol: 2 20 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:6, srcFileIdx:0, absOrigLine:2, absOrigCol:20
+[MAP-DEBUG] inputPos: 81 → rawLine,rawCol: 2 20 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:20
+[MAP-DEBUG] inputPos: 82 → rawLine,rawCol: 2 21 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:0, srcFileIdx:0, absOrigLine:2, absOrigCol:21
+[MAP-DEBUG] inputPos: 88 → rawLine,rawCol: 2 27 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:6, srcFileIdx:0, absOrigLine:2, absOrigCol:27
+[MAP-DEBUG] inputPos: 88 → rawLine,rawCol: 2 27 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:27
+[MAP-DEBUG] inputPos: 89 → rawLine,rawCol: 2 28 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:1, srcFileIdx:0, absOrigLine:2, absOrigCol:28
+[MAP-DEBUG] inputPos: 100 → rawLine,rawCol: 2 39 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[2]: genCol:11, srcFileIdx:0, absOrigLine:2, absOrigCol:39
+[MAP-DEBUG] Pushing to @lines[3]: genCol:0, srcFileIdx:0, absOrigLine:3, absOrigCol:0
+[MAP-DEBUG] inputPos: 101 → rawLine,rawCol: 3 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[3]: genCol:0, srcFileIdx:0, absOrigLine:3, absOrigCol:0
+[MAP-DEBUG] inputPos: 112 → rawLine,rawCol: 3 11 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[3]: genCol:11, srcFileIdx:0, absOrigLine:3, absOrigCol:11
+[MAP-DEBUG] Pushing to @lines[4]: genCol:0, srcFileIdx:0, absOrigLine:4, absOrigCol:0
+[MAP-DEBUG] inputPos: 113 → rawLine,rawCol: 4 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[4]: genCol:0, srcFileIdx:0, absOrigLine:4, absOrigCol:0
+[MAP-DEBUG] inputPos: 136 → rawLine,rawCol: 4 23 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[4]: genCol:23, srcFileIdx:0, absOrigLine:4, absOrigCol:23
+[MAP-DEBUG] Pushing to @lines[5]: genCol:0, srcFileIdx:0, absOrigLine:5, absOrigCol:0
+[MAP-DEBUG] inputPos: 137 → rawLine,rawCol: 5 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[5]: genCol:0, srcFileIdx:0, absOrigLine:5, absOrigCol:0
+[MAP-DEBUG] inputPos: 173 → rawLine,rawCol: 5 36 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[5]: genCol:36, srcFileIdx:0, absOrigLine:5, absOrigCol:36
+[MAP-DEBUG] Pushing to @lines[6]: genCol:0, srcFileIdx:0, absOrigLine:6, absOrigCol:0
+[MAP-DEBUG] inputPos: 174 → rawLine,rawCol: 6 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:0, srcFileIdx:0, absOrigLine:6, absOrigCol:0
+[MAP-DEBUG] inputPos: 174 → rawLine,rawCol: 6 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:0, srcFileIdx:0, absOrigLine:6, absOrigCol:0
+[MAP-DEBUG] inputPos: 178 → rawLine,rawCol: 6 4 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:4, srcFileIdx:0, absOrigLine:6, absOrigCol:4
+[MAP-DEBUG] inputPos: 178 → rawLine,rawCol: 6 4 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:1, srcFileIdx:0, absOrigLine:6, absOrigCol:4
+[MAP-DEBUG] inputPos: 179 → rawLine,rawCol: 6 5 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:0, srcFileIdx:0, absOrigLine:6, absOrigCol:5
+[MAP-DEBUG] inputPos: 184 → rawLine,rawCol: 6 10 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:5, srcFileIdx:0, absOrigLine:6, absOrigCol:10
+[MAP-DEBUG] inputPos: 184 → rawLine,rawCol: 6 10 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[6]: genCol:1, srcFileIdx:0, absOrigLine:6, absOrigCol:10
+[MAP-DEBUG] Pushing to @lines[7]: genCol:0, srcFileIdx:0, absOrigLine:7, absOrigCol:0
+[MAP-DEBUG] inputPos: 185 → rawLine,rawCol: 7 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:0, srcFileIdx:0, absOrigLine:7, absOrigCol:0
+[MAP-DEBUG] inputPos: 185 → rawLine,rawCol: 7 0 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:0, srcFileIdx:0, absOrigLine:7, absOrigCol:0
+[MAP-DEBUG] inputPos: 189 → rawLine,rawCol: 7 4 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:4, srcFileIdx:0, absOrigLine:7, absOrigCol:4
+[MAP-DEBUG] inputPos: 189 → rawLine,rawCol: 7 4 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:1, srcFileIdx:0, absOrigLine:7, absOrigCol:4
+[MAP-DEBUG] inputPos: 190 → rawLine,rawCol: 7 5 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:0, srcFileIdx:0, absOrigLine:7, absOrigCol:5
+[MAP-DEBUG] inputPos: 195 → rawLine,rawCol: 7 10 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:5, srcFileIdx:0, absOrigLine:7, absOrigCol:10
+[MAP-DEBUG] inputPos: 195 → rawLine,rawCol: 7 10 colOffset: 0
+[MAP-DEBUG] Pushing to @lines[7]: genCol:1, srcFileIdx:0, absOrigLine:7, absOrigCol:10
+[MAP-DEBUG] Pushing to @lines[8]: genCol:0, srcFileIdx:0, absOrigLine:8, absOrigCol:0
 
-Generated TypeScript Code:
-// Civet Line 1
-const count = 0 // Civet Line 2
-const result = count * 2 // Civet Line 3
+  .
 
-Generated Sourcemap JSON:
-{
-  "version": 3,
-  "sources": [
-    null
-  ],
-  "mappings": "AAAA,eAAe;AACf,AAAK,MAAL,KAAK,CAAC,CAAE,CAAC,CAAC,CAAC,eAAe;AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC",
-  "names": [],
-  "sourcesContent": [
-    "// Civet Line 1\ncount := 0 // Civet Line 2\nresult := count * 2 // Civet Line 3"
-  ]
-}
-
-SCENARIO OVERALL STATUS: 🚧 FAILED
-
---- TOKEN MAPPING VERIFICATION ---
-
---- Testing Token: 'count keyword' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Variable Reassignment and Expressions.civet').
-  Target Generated  : TS Line 2, Col 6
-  Expected Original : Civet Line 2, Col 0
-  Actual Mapped     : Civet Line 2, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'count keyword' ---
-
---- Testing Token: 'result keyword' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Variable Reassignment and Expressions.civet').
-  Target Generated  : TS Line 3, Col 6
-  Expected Original : Civet Line 3, Col 0
-  Actual Mapped     : Civet Line 3, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'result keyword' ---
-
---- Testing Token: 'count in expression' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Variable Reassignment and Expressions.civet').
-  Target Generated  : TS Line 3, Col 15
-  Expected Original : Civet Line 3, Col 9
-  Actual Mapped     : Civet Line 3, Col 10 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token 'count in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 9. Actual: Civet Line 3, Col 10 (Source: undefined).
-  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
-  Decoded Segments for TS Line 3:
-    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('AAAM'): [0, 0, 0, 6]
-    - Segment 4 ('MAAN'): [6, 0, 0, -6]
-    - Segment 5 ('MAAM'): [6, 0, 0, 6]
-    - Segment 6 ('CAAC'): [1, 0, 0, 1]
-    - Segment 7 ('CAAE'): [1, 0, 0, 2]
-    - Segment 8 ('CAAC'): [1, 0, 0, 1]
-    - Segment 9 ('KAAK'): [5, 0, 0, 5]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('CAAC'): [1, 0, 0, 1]
---- End Token: 'count in expression' ---
-
---- Testing Token: '* in expression' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Variable Reassignment and Expressions.civet').
-  Target Generated  : TS Line 3, Col 21
-  Expected Original : Civet Line 3, Col 15
-  Actual Mapped     : Civet Line 3, Col 16 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token '* in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 15. Actual: Civet Line 3, Col 16 (Source: undefined).
-  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
-  Decoded Segments for TS Line 3:
-    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('AAAM'): [0, 0, 0, 6]
-    - Segment 4 ('MAAN'): [6, 0, 0, -6]
-    - Segment 5 ('MAAM'): [6, 0, 0, 6]
-    - Segment 6 ('CAAC'): [1, 0, 0, 1]
-    - Segment 7 ('CAAE'): [1, 0, 0, 2]
-    - Segment 8 ('CAAC'): [1, 0, 0, 1]
-    - Segment 9 ('KAAK'): [5, 0, 0, 5]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('CAAC'): [1, 0, 0, 1]
---- End Token: '* in expression' ---
-
---- Testing Token: '2 in expression' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Variable Reassignment and Expressions.civet').
-  Target Generated  : TS Line 3, Col 23
-  Expected Original : Civet Line 3, Col 17
-  Actual Mapped     : Civet Line 3, Col 18 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token '2 in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 17. Actual: Civet Line 3, Col 18 (Source: undefined).
-  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
-  Decoded Segments for TS Line 3:
-    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('AAAM'): [0, 0, 0, 6]
-    - Segment 4 ('MAAN'): [6, 0, 0, -6]
-    - Segment 5 ('MAAM'): [6, 0, 0, 6]
-    - Segment 6 ('CAAC'): [1, 0, 0, 1]
-    - Segment 7 ('CAAE'): [1, 0, 0, 2]
-    - Segment 8 ('CAAC'): [1, 0, 0, 1]
-    - Segment 9 ('KAAK'): [5, 0, 0, 5]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('CAAC'): [1, 0, 0, 1]
---- End Token: '2 in expression' ---
---- END SCENARIO: Variable Reassignment and Expressions ---
-
-
-
---- BEGIN SCENARIO: Conditional Statement (if/else) ---
-Input Civet Code:
-// Civet Line 1
-num := 10 // Civet Line 2
-message := if num > 0 // Civet Line 3
-  "Positive" // Civet Line 4
-else // Civet Line 5
-  "Non-Positive" // Civet Line 6
-console.log message // Civet Line 7
-
-Generated TypeScript Code:
-// Civet Line 1
-const num = 10 // Civet Line 2
-let ref;if (num > 0) { // Civet Line 3
-  ref = "Positive"
-} // Civet Line 4
-else { // Civet Line 5
-  ref = "Non-Positive"
-};const message =ref // Civet Line 6
-console.log(message) // Civet Line 7
-
-Generated Sourcemap JSON:
-{
-  "version": 3,
-  "sources": [
-    null
-  ],
-  "mappings": "AAAA,eAAe;AACf,AAAG,MAAH,GAAG,CAAC,CAAE,CAAC,EAAE,CAAC,eAAe;AACzB,AAAA,I,G,CAAW,GAAG,CAAA,GAAG,CAAC,CAAC,CAAC,CAAC,CAAA,CAAA,CAAA,CAAC,eAAe;AACrC,AAAA,E,G,GAAE,U;AAAU,CAAA,CAAC,eAAe;AAC5B,AAAA,AAAA,IAAI,CAAA,CAAA,CAAC,eAAe;AACpB,AAAA,E,G,GAAE,c;AAAc,C,CAHT,MAAP,OAAO,CAAC,C,GAGQ,CAAC,eAAe;AAChC,AAAA,AAAA,OAAO,CAAC,GAAG,CAAA,AAAC,OAAO,CAAA,CAAC",
-  "names": [],
-  "sourcesContent": [
-    "// Civet Line 1\nnum := 10 // Civet Line 2\nmessage := if num > 0 // Civet Line 3\n  \"Positive\" // Civet Line 4\nelse // Civet Line 5\n  \"Non-Positive\" // Civet Line 6\nconsole.log message // Civet Line 7"
-  ]
-}
-
-SCENARIO OVERALL STATUS: ✅ PASSED
-
---- TOKEN MAPPING VERIFICATION ---
-
---- Testing Token: 'num keyword' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 2, Col 6
-  Expected Original : Civet Line 2, Col 0
-  Actual Mapped     : Civet Line 2, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'num keyword' ---
-
---- Testing Token: 'message keyword for const' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 8, Col 8
-  Expected Original : Civet Line 3, Col 0
-  Actual Mapped     : Civet Line 3, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'message keyword for const' ---
-
---- Testing Token: 'num in condition' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 3, Col 12
-  Expected Original : Civet Line 3, Col 14
-  Actual Mapped     : Civet Line 3, Col 14 (Source: undefined)
-  Status            : PASSED
---- End Token: 'num in condition' ---
-
---- Testing Token: '> in condition' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 3, Col 16
-  Expected Original : Civet Line 3, Col 18
-  Actual Mapped     : Civet Line 3, Col 18 (Source: undefined)
-  Status            : PASSED
---- End Token: '> in condition' ---
-
---- Testing Token: '"Positive" string' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 4, Col 8
-  Expected Original : Civet Line 4, Col 2
-  Actual Mapped     : Civet Line 4, Col 2 (Source: undefined)
-  Status            : PASSED
---- End Token: '"Positive" string' ---
-
---- Testing Token: '"Non-Positive" string' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 7, Col 8
-  Expected Original : Civet Line 6, Col 2
-  Actual Mapped     : Civet Line 6, Col 2 (Source: undefined)
-  Status            : PASSED
---- End Token: '"Non-Positive" string' ---
-
---- Testing Token: 'console.log call' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 9, Col 0
-  Expected Original : Civet Line 7, Col 0
-  Actual Mapped     : Civet Line 7, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'console.log call' ---
-
---- Testing Token: 'message arg in console.log' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Conditional Statement (if/else).civet').
-  Target Generated  : TS Line 9, Col 12
-  Expected Original : Civet Line 7, Col 12
-  Actual Mapped     : Civet Line 7, Col 12 (Source: undefined)
-  Status            : PASSED
---- End Token: 'message arg in console.log' ---
---- END SCENARIO: Conditional Statement (if/else) ---
-
-
-
---- BEGIN SCENARIO: Loop Construct (for...of) ---
-Input Civet Code:
-// Civet Line 1
-data := [10, 20] // Civet Line 2
-processed := [] // Civet Line 3
-for item of data // Civet Line 4
-  processed.push item + 1 // Civet Line 5
-console.log processed // Civet Line 6
-
-Generated TypeScript Code:
-// Civet Line 1
-const data = [10, 20] // Civet Line 2
-const processed = [] // Civet Line 3
-for (const item of data) { // Civet Line 4
-  processed.push(item + 1)
-} // Civet Line 5
-console.log(processed) // Civet Line 6
-
-Generated Sourcemap JSON:
-{
-  "version": 3,
-  "sources": [
-    null
-  ],
-  "mappings": "AAAA,eAAe;AACf,AAAI,MAAJ,IAAI,CAAC,CAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,eAAe;AAChC,AAAA,AAAS,MAAT,SAAS,CAAC,CAAE,CAAC,CAAC,CAAC,CAAC,eAAe;AAC/B,AAAA,AAAA,GAAG,CAAC,CAAA,MAAA,IAAI,CAAC,EAAE,CAAC,IAAI,CAAA,CAAA,CAAA,CAAC,eAAe;AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C;AAAA,CAAA,CAAC,eAAe;AACzC,AAAA,AAAA,OAAO,CAAC,GAAG,CAAA,AAAC,SAAS,CAAA,CAAC",
-  "names": [],
-  "sourcesContent": [
-    "// Civet Line 1\ndata := [10, 20] // Civet Line 2\nprocessed := [] // Civet Line 3\nfor item of data // Civet Line 4\n  processed.push item + 1 // Civet Line 5\nconsole.log processed // Civet Line 6"
-  ]
-}
-
-SCENARIO OVERALL STATUS: 🚧 FAILED
-
---- TOKEN MAPPING VERIFICATION ---
-
---- Testing Token: 'data declaration' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 2, Col 6
-  Expected Original : Civet Line 2, Col 0
-  Actual Mapped     : Civet Line 2, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'data declaration' ---
-
---- Testing Token: '[10, 20] array' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 2, Col 13
-  Expected Original : Civet Line 2, Col 8
-  Actual Mapped     : Civet Line 2, Col 8 (Source: undefined)
-  Status            : PASSED
---- End Token: '[10, 20] array' ---
-
---- Testing Token: 'processed declaration' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 3, Col 6
-  Expected Original : Civet Line 3, Col 0
-  Actual Mapped     : Civet Line 3, Col 0 (Source: undefined)
-  Status            : PASSED
---- End Token: 'processed declaration' ---
-
---- Testing Token: 'item in for loop declaration' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 4, Col 11
-  Expected Original : Civet Line 4, Col 4
-  Actual Mapped     : Civet Line 4, Col 4 (Source: undefined)
-  Status            : PASSED
---- End Token: 'item in for loop declaration' ---
-
---- Testing Token: 'data in for loop usage' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 4, Col 20
-  Expected Original : Civet Line 4, Col 12
-  Actual Mapped     : Civet Line 4, Col 12 (Source: undefined)
-  Status            : PASSED
---- End Token: 'data in for loop usage' ---
-
---- Testing Token: 'processed in push' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 5, Col 2
-  Expected Original : Civet Line 5, Col 2
-  Actual Mapped     : Civet Line 5, Col 2 (Source: undefined)
-  Status            : PASSED
---- End Token: 'processed in push' ---
-
---- Testing Token: 'item in push argument' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 5, Col 17
-  Expected Original : Civet Line 5, Col 15
-  Actual Mapped     : Civet Line 5, Col 17 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token 'item in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 15. Actual: Civet Line 5, Col 17 (Source: undefined).
-  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
-  Decoded Segments for TS Line 5:
-    - Segment 1 ('AAChC'): [0, 0, 1, -32]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('EAAE'): [2, 0, 0, 2]
-    - Segment 4 ('SAAS'): [9, 0, 0, 9]
-    - Segment 5 ('CAAC'): [1, 0, 0, 1]
-    - Segment 6 ('IAAI'): [4, 0, 0, 4]
-    - Segment 7 ('CAAA'): [1, 0, 0, 0]
-    - Segment 8 ('AAAC'): [0, 0, 0, 1]
-    - Segment 9 ('IAAI'): [4, 0, 0, 4]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('C'): [1]
---- End Token: 'item in push argument' ---
-
---- Testing Token: '+ in push argument' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 5, Col 22
-  Expected Original : Civet Line 5, Col 20
-  Actual Mapped     : Civet Line 5, Col 22 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token '+ in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 20. Actual: Civet Line 5, Col 22 (Source: undefined).
-  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
-  Decoded Segments for TS Line 5:
-    - Segment 1 ('AAChC'): [0, 0, 1, -32]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('EAAE'): [2, 0, 0, 2]
-    - Segment 4 ('SAAS'): [9, 0, 0, 9]
-    - Segment 5 ('CAAC'): [1, 0, 0, 1]
-    - Segment 6 ('IAAI'): [4, 0, 0, 4]
-    - Segment 7 ('CAAA'): [1, 0, 0, 0]
-    - Segment 8 ('AAAC'): [0, 0, 0, 1]
-    - Segment 9 ('IAAI'): [4, 0, 0, 4]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('C'): [1]
---- End Token: '+ in push argument' ---
-
---- Testing Token: '1 in push argument' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 5, Col 24
-  Expected Original : Civet Line 5, Col 22
-  Actual Mapped     : Civet Line 5, Col 24 (Source: undefined)
-  Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token '1 in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 22. Actual: Civet Line 5, Col 24 (Source: undefined).
-  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
-  Decoded Segments for TS Line 5:
-    - Segment 1 ('AAChC'): [0, 0, 1, -32]
-    - Segment 2 ('AAAA'): [0, 0, 0, 0]
-    - Segment 3 ('EAAE'): [2, 0, 0, 2]
-    - Segment 4 ('SAAS'): [9, 0, 0, 9]
-    - Segment 5 ('CAAC'): [1, 0, 0, 1]
-    - Segment 6 ('IAAI'): [4, 0, 0, 4]
-    - Segment 7 ('CAAA'): [1, 0, 0, 0]
-    - Segment 8 ('AAAC'): [0, 0, 0, 1]
-    - Segment 9 ('IAAI'): [4, 0, 0, 4]
-    - Segment 10 ('CAAC'): [1, 0, 0, 1]
-    - Segment 11 ('CAAC'): [1, 0, 0, 1]
-    - Segment 12 ('CAAC'): [1, 0, 0, 1]
-    - Segment 13 ('CAAC'): [1, 0, 0, 1]
-    - Segment 14 ('C'): [1]
---- End Token: '1 in push argument' ---
-
---- Testing Token: 'processed in console.log' (with source-map) ---
-  WARNING: Mapped source ('undefined') differs from expected ('Loop Construct (for...of).civet').
-  Target Generated  : TS Line 7, Col 12
-  Expected Original : Civet Line 6, Col 12
-  Actual Mapped     : Civet Line 6, Col 12 (Source: undefined)
-  Status            : PASSED
---- End Token: 'processed in console.log' ---
---- END SCENARIO: Loop Construct (for...of) ---
+  1 passing (230ms)

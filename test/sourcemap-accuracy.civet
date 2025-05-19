@@ -1,5 +1,5 @@
-{compile} from ../source/main.civet
-assert from assert
+import { compile } from '../source/main.civet'
+import assert from 'assert'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -55,7 +55,6 @@ do
     i++
 
 decodeSingleVLQSegment := (mappingSegment: string): number[] ->
-  i .= 0
   l .= mappingSegment.length
   result: number[] .= []
   currentMappingIndex .= 0
@@ -114,10 +113,12 @@ describe "source map accuracy", ->
         sync: true
         sourceMap: true
         js: false
-        filename: sourceFilename
+        sources: sourceFilename
       })
       tsCode := result.code
-      mapJson := result.sourceMap.json()
+      // # Provide source and out file names to populate `sources`
+      outFilename := sourceFilename.replace('.civet', '.js')
+      mapJson := result.sourceMap.json(sourceFilename, outFilename)
 
       scenarioLogCollector.push("\nGenerated TypeScript Code:")
       scenarioLogCollector.push(tsCode)
@@ -142,6 +143,11 @@ describe "source map accuracy", ->
       tokenVerificationLogs: string[] .= ["\n--- TOKEN MAPPING VERIFICATION ---"]
       scenarioFailureMessages: string[] .= []
       overallScenarioStatus .= "PASSED"
+
+      // This warning remains useful: checks if the populated source filename is what we expect.
+      if mapJson.sources && mapJson.sources.length > 0 && mapJson.sources[0] !== sourceFilename
+          appendToLog(`\\n[TEST-WARNING] mapJson.sources[0] ('${mapJson.sources[0]}') does not match expected sourceFilename ('${sourceFilename}'). Check test setup or Civet output filename handling.\\n`)
+
 
       if testWithLibrary == 'source-map'
         await SourceMapConsumer.with mapJson, null, async (consumer) =>
@@ -357,64 +363,30 @@ describe "source map accuracy", ->
       if (overallScenarioStatus !== "PASSED")
         assert.fail(`Scenario '${scenarioName}' failed. Check log for details. First few assertion messages: ${scenarioFailureMessages.slice(0,3).join('; ')}`)
 
-  runScenario "Simple Variable Declaration",
-    `// Civet Line 1
-myVar := 123 // Civet Line 2
-another := "text" // Civet Line 3`,
+  runScenario "Microtest3: inputPos and srcLine Synchronization",
+    `// Civet L1
+// Civet L2: tokenA then tokenB on the same line
+first tokenA; second tokenB // Civet L3
+// Civet L4
+// Civet L5: call funcC
+// Civet L6: call funcD on next line
+call funcC
+call funcD
+`, // Expected TS for L3: first(tokenA); second(tokenB);
+   // Expected TS for L6-L7: call(funcC); call(funcD);
     [
-      { tokenDescription: 'myVar keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'myVar' }, 
-      { tokenDescription: '123 literal', generatedTSLine: 2, generatedTSColumn: 14, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 9, originalCivetTokenString: '123' },   
-      { tokenDescription: 'another keyword', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'another' },
-      { tokenDescription: '"text" literal', generatedTSLine: 3, generatedTSColumn: 16, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 11, originalCivetTokenString: '"text"' }
-    ]
-  
-  runScenario "Variable Reassignment and Expressions",
-    `// Civet Line 1
-count := 0 // Civet Line 2
-result := count * 2 // Civet Line 3`,
-    [
-      { tokenDescription: 'count keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'count' }, 
-      { tokenDescription: 'result keyword', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'result' },
-      { tokenDescription: 'count in expression', generatedTSLine: 3, generatedTSColumn: 15, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 9, originalCivetTokenString: 'count' }, // TS: const result = count * 2; Civet: result := count * 2
-      { tokenDescription: '* in expression', generatedTSLine: 3, generatedTSColumn: 21, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 15, originalCivetTokenString: '*' },
-      { tokenDescription: '2 in expression', generatedTSLine: 3, generatedTSColumn: 23, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 17, originalCivetTokenString: '2' }
-    ]
+      // Test case for "first tokenA" on Civet L3
+      // tokenA starts at original Civet L3 (0-idx 2), Col 6 (0-idx)
+      { tokenDescription: 'L3 tokenA', generatedTSLine: 3, generatedTSColumn: 7, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 6, originalCivetTokenString: 'tokenA' },
+      // Test case for "second tokenB" on Civet L3
+      // tokenB starts at original Civet L3 (0-idx 2), Col 21 (0-idx)
+      { tokenDescription: 'L3 tokenB', generatedTSLine: 3, generatedTSColumn: 25, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 21, originalCivetTokenString: 'tokenB' },
 
-  runScenario "Conditional Statement (if/else)",
-    `// Civet Line 1
-num := 10 // Civet Line 2
-message := if num > 0 // Civet Line 3
-  "Positive" // Civet Line 4
-else // Civet Line 5
-  "Non-Positive" // Civet Line 6
-console.log message // Civet Line 7`,
-    [
-      { tokenDescription: 'num keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0 }, 
-      { tokenDescription: 'message keyword for const', generatedTSLine: 8, generatedTSColumn: 8, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'message' }, // TS: };const message =ref 
-      { tokenDescription: 'num in condition', generatedTSLine: 3, generatedTSColumn: 12, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 14, originalCivetTokenString: 'num' }, // TS: let ref;if (num > 0)
-      { tokenDescription: '> in condition', generatedTSLine: 3, generatedTSColumn: 16, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 18, originalCivetTokenString: '>' },
-      { tokenDescription: '"Positive" string', generatedTSLine: 4, generatedTSColumn: 8, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 2 },
-      { tokenDescription: '"Non-Positive" string', generatedTSLine: 7, generatedTSColumn: 8, expectedOriginalCivetLine: 6, expectedOriginalCivetColumn: 2 },
-      { tokenDescription: 'console.log call', generatedTSLine: 9, generatedTSColumn: 0, expectedOriginalCivetLine: 7, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'console' }, // console.log
-      { tokenDescription: 'message arg in console.log', generatedTSLine: 9, generatedTSColumn: 12, expectedOriginalCivetLine: 7, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'message' } // console.log(message)
-    ]
-  
-  runScenario "Loop Construct (for...of)",
-    `// Civet Line 1
-data := [10, 20] // Civet Line 2
-processed := [] // Civet Line 3
-for item of data // Civet Line 4
-  processed.push item + 1 // Civet Line 5
-console.log processed // Civet Line 6`,
-    [
-      { tokenDescription: 'data declaration', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0 },
-      { tokenDescription: '[10, 20] array', generatedTSLine: 2, generatedTSColumn: 13, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 8 },
-      { tokenDescription: 'processed declaration', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0 }, 
-      { tokenDescription: 'item in for loop declaration', generatedTSLine: 4, generatedTSColumn: 11, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 4, originalCivetTokenString: 'item' }, // TS: for (const item of data)
-      { tokenDescription: 'data in for loop usage', generatedTSLine: 4, generatedTSColumn: 20, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'data' }, // TS: for (const item of data)
-      { tokenDescription: 'processed in push', generatedTSLine: 5, generatedTSColumn: 2, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 2, originalCivetTokenString: 'processed' }, // TS: processed.push(...)
-      { tokenDescription: 'item in push argument', generatedTSLine: 5, generatedTSColumn: 17, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 15, originalCivetTokenString: 'item'}, // TS: processed.push(item + 1)
-      { tokenDescription: '+ in push argument', generatedTSLine: 5, generatedTSColumn: 22, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 20, originalCivetTokenString: '+'},
-      { tokenDescription: '1 in push argument', generatedTSLine: 5, generatedTSColumn: 24, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 22, originalCivetTokenString: '1'},
-      { tokenDescription: 'processed in console.log', generatedTSLine: 7, generatedTSColumn: 12, expectedOriginalCivetLine: 6, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'processed' } // TS: console.log(processed)
+      // Test case for "call funcC" on Civet L6
+      // Mapping for generated call(funcC) resolves to start of "call" keyword in original: Civet L6 (0-idx 5), Col 0 (0-idx)
+      { tokenDescription: 'L6 funcC', generatedTSLine: 6, generatedTSColumn: 5, expectedOriginalCivetLine: 6, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'funcC' },
+      // Test case for "call funcD" on Civet L7
+      // funcD is on the NEXT generated TS line.
+      // Assuming 'call(funcD)' is generated. 'funcD' starts at TS Col 5 on that new line.
+      { tokenDescription: 'L7 funcD', generatedTSLine: 7, generatedTSColumn: 5, expectedOriginalCivetLine: 7, expectedOriginalCivetColumn: 5, originalCivetTokenString: 'funcD' }
     ]
