@@ -28,7 +28,7 @@ describe "source map accuracy", ->
   runScenario := async (scenarioName: string, civetCode: string, tokenTests: TokenTest[]) ->
     it scenarioName, async ->
       let scenarioLogCollector: string[] = []
-      scenarioLogCollector.push(`\n--- BEGIN SCENARIO: ${scenarioName} ---`)
+      scenarioLogCollector.push(`\n\n--- BEGIN SCENARIO: ${scenarioName} ---`)
       scenarioLogCollector.push("Input Civet Code:")
       scenarioLogCollector.push(civetCode)
 
