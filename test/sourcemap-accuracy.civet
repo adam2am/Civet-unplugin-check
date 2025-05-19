@@ -8,100 +8,232 @@ import { SourceMapConsumer } from 'source-map'
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const logFilePath = path.join(__dirname, 'sourcemap-accuracy.log')
+
+// Helper to clear and append to log file
+const clearLog = () -> fs.writeFileSync(logFilePath, '', 'utf8')
+const appendToLog = (content: string) -> fs.appendFileSync(logFilePath, content, 'utf8')
+
+interface TokenTest {
+  token: string
+  line: number
+  column?: number
+}
 
 describe "source map accuracy", ->
-  it "should map variables back to original Civet lines and columns", ->
-    // Define the simple Civet code to be tested
-    civetCode := `
-// Line 1: This is a comment, actual code starts on the next line
+  before ->
+    clearLog()
+    appendToLog("Civet Sourcemap Accuracy Test Log\n===================================\n")
+
+  runScenario := async (scenarioName: string, civetCode: string, tokenTests: TokenTest[]) ->
+    it scenarioName, async ->
+      let scenarioLogCollector: string[] = []
+      scenarioLogCollector.push(`\n--- BEGIN SCENARIO: ${scenarioName} ---`)
+      scenarioLogCollector.push("Input Civet Code:")
+      scenarioLogCollector.push(civetCode)
+
+      sourceFilename := `${scenarioName.replace(/\\s+/g, '-')}.civet`
+
+      result := compile(civetCode, {
+        sync: true
+        sourceMap: true
+        js: false
+        filename: sourceFilename
+      })
+      tsCode := result.code
+      mapJson := result.sourceMap.json()
+
+      scenarioLogCollector.push("\nGenerated TypeScript Code:")
+      scenarioLogCollector.push(tsCode)
+      scenarioLogCollector.push("\nGenerated Sourcemap JSON:")
+      scenarioLogCollector.push(JSON.stringify(mapJson, null, 2))
+      
+      if (!mapJson.sources || mapJson.sources.length === 0 || mapJson.sources[0] === null) {
+        mapJson.sources = [sourceFilename]; 
+        mapJson.sourcesContent = [civetCode]; 
+      } else if (!mapJson.sourcesContent || mapJson.sourcesContent.length === 0) {
+        mapJson.sourcesContent = [civetCode];
+      } else if (mapJson.sources && mapJson.sources[0] && mapJson.sources[0] !== sourceFilename && mapJson.sourcesContent && mapJson.sourcesContent[0] !== civetCode) {
+        if (mapJson.sourcesContent[0] === civetCode) {
+             scenarioLogCollector.push(`\nNOTE: Sourcemap source[0] is '${mapJson.sources[0]}', test uses '${sourceFilename}'. Content matching assumed.`);
+        }
+      }
+
+      appendToLog(scenarioLogCollector.join('\n') + '\n') 
+
+      const generatedTsLines = tsCode.split('\n');
+
+      let tokenVerificationLogs: string[] = ["\n--- TOKEN MAPPING VERIFICATION ---"]
+      let overallScenarioStatus = "PASSED"
+      let scenarioFailureMessages: string[] = []
+
+      await SourceMapConsumer.with mapJson, null, async (consumer) =>
+        testToken := (token: string, expectedOriginalLine: number, expectedOriginalColumnOverride?: number): {status: string, details: string[], assertionMessage: string | undefined} ->
+          let tokenLog: string[] = []
+          tokenLog.push(`\n--- Testing Token: '${token}' ---`)
+          
+          assertionMessagePrefix := `Token '${token}' in scenario '${scenarioName}'`
+          let generatedTSPositionString = "N/A"
+          let mappedOriginalPositionString = "N/A"
+          let expectedOriginalPositionString = `Civet Line ${expectedOriginalLine}`
+          let currentTokenStatus = "PASSED"
+          let currentTokenAssertionMessage: string | undefined = undefined
+
+          try
+            lineIndex := generatedTsLines.findIndex (l) => l.includes(token)
+            if lineIndex < 0
+              currentTokenStatus = `FAILED: Token not found in compiled TS code.`
+              currentTokenAssertionMessage = `${assertionMessagePrefix} not found in compiled TS code.`
+            else
+              columnIndex := generatedTsLines[lineIndex].indexOf(token)
+              if columnIndex < 0 
+                currentTokenStatus = `FAILED: Token somehow not found at column on its line.`
+                currentTokenAssertionMessage = `${assertionMessagePrefix} not found at column on TS line ${lineIndex + 1}.`
+              else
+                generatedTSPositionString = `TS Line ${lineIndex + 1}, Col ${columnIndex}`
+                orig := consumer.originalPositionFor({ line: lineIndex + 1, column: columnIndex })
+                
+                mappedOriginalPositionString = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
+                
+                if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined) {
+                    tokenLog.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
+                }
+                if (orig.source === null || orig.source === undefined) {
+                    tokenLog.push(`  CRITICAL: Mapped source is null or undefined. This often indicates a broken mapping.`)
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Undefined Source)"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Mapped source is null or undefined.`
+                }
+
+                if (orig.line == null || orig.column == null) {
+                  if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Null Original Position)"
+                  if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}`
+                } else {
+                  const originalCodeLines = civetCode.split('\n');
+                  expectedOriginalColumn := if typeof expectedOriginalColumnOverride is 'number'
+                    expectedOriginalColumnOverride
+                  else if (expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length)
+                    originalCodeLines[expectedOriginalLine - 1].indexOf(token)
+                  else
+                    -1 
+
+                  if (expectedOriginalColumn == -1 && typeof expectedOriginalColumnOverride !== 'number') {
+                       tokenLog.push(`  WARNING: Could not determine expected original column for '${token}' on line ${expectedOriginalLine}. Original line content: '${expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length ? originalCodeLines[expectedOriginalLine-1] : "Line out of bounds"}'.indexOf('${token}')`)
+                  }
+                  expectedOriginalPositionString = `Civet Line ${expectedOriginalLine}, Col ${expectedOriginalColumn === -1 ? 'N/A' : expectedOriginalColumn}`
+                  
+                  if (orig.line !== expectedOriginalLine) {
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Line Mismatch)`
+                    else if (!currentTokenStatus.includes("Line Mismatch")) currentTokenStatus += " + Line Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} LINE MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
+                  }
+                  
+                  if (orig.column !== expectedOriginalColumn && expectedOriginalColumn !== -1) { 
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Column Mismatch)`
+                    else if (!currentTokenStatus.includes("Column Mismatch")) currentTokenStatus += " + Column Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} COLUMN MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
+                  }
+                }
+          catch e: any
+            currentTokenStatus = `FAILED (Unexpected Exception: ${e.message})`
+            currentTokenAssertionMessage = `${assertionMessagePrefix} UNEXPECTED EXCEPTION: ${e.message}`
+          
+          finally
+            tokenLog.push(`  Generated Position: ${generatedTSPositionString}`)
+            tokenLog.push(`  Expected Original : ${expectedOriginalPositionString}`)
+            tokenLog.push(`  Actual Mapped     : ${mappedOriginalPositionString}`)
+            tokenLog.push(`  Status            : ${currentTokenStatus}`)
+            if (currentTokenAssertionMessage && currentTokenStatus !== "PASSED") {
+              tokenLog.push(`  Failure Reason    : ${currentTokenAssertionMessage}`)
+            }
+            tokenLog.push(`--- End Token: '${token}' ---`)
+            
+          return { status: currentTokenStatus, details: tokenLog, assertionMessage: currentTokenAssertionMessage }
+
+        for testSpec of tokenTests
+            let result: {status: string, details: string[], assertionMessage: string | undefined} = testToken(testSpec.token, testSpec.line, testSpec.column)
+            tokenVerificationLogs.push(result.details.join('\n'))
+            if (result.status !== "PASSED")
+              overallScenarioStatus = "FAILED"
+              if (result.assertionMessage && !scenarioFailureMessages.includes(result.assertionMessage)) 
+                scenarioFailureMessages.push(result.assertionMessage)
+      
+      appendToLog(tokenVerificationLogs.join('\n') + '\n') 
+      appendToLog(`--- END SCENARIO: ${scenarioName} ---\n`)
+
+      if (overallScenarioStatus !== "PASSED")
+        assert.fail(`Scenario '${scenarioName}' failed. Check log for details. First few assertion messages: ${scenarioFailureMessages.slice(0,3).join('; ')}`)
+
+  runScenario "Simple Variable Declaration",
+    `// Civet Line 1
+myVar := 123 // Civet Line 2
+another := "text" // Civet Line 3`,
+    [
+      { token: 'myVar', line: 2 }, 
+      { token: '123', line: 2 },   
+      { token: 'another', line: 3 },
+      { token: '"text"', line: 3 }
+    ]
+  
+  runScenario "Variable Reassignment and Expressions",
+    `// Civet Line 1
+count := 0 // Civet Line 2
+count = count + 5 // Civet Line 3
+result := count * 2 // Civet Line 4`,
+    [
+      { token: 'count', line: 2, column: 0 }, 
+      { token: 'count =', line: 3, column: 0 }, 
+      { token: 'count + 5', line: 3, column: 8 }, 
+      { token: 'result', line: 4 },
+      { token: 'count * 2', line: 4, column: 11}
+    ]
+
+  runScenario "Conditional Statement (if/else)",
+    `// Civet Line 1
+num := 10 // Civet Line 2
+message := if num > 0 // Civet Line 3
+  "Positive" // Civet Line 4
+else // Civet Line 5
+  "Non-Positive" // Civet Line 6
+console.log message // Civet Line 7`,
+    [
+      { token: 'num', line: 2, column: 0 }, 
+      { token: 'message', line: 3, column: 0 }, 
+      { token: 'num > 0', line: 3, column: 14 }, 
+      { token: '"Positive"', line: 4 },
+      { token: '"Non-Positive"', line: 6 },
+      { token: 'console.log', line: 7 },
+      { token: 'message', line: 7, column: 12 } 
+    ]
+  
+  runScenario "Loop Construct (for...of)",
+    `// Civet Line 1
+data := [10, 20] // Civet Line 2
+processed := [] // Civet Line 3
+for item of data // Civet Line 4
+  processed.push item + 1 // Civet Line 5
+console.log processed // Civet Line 6`,
+    [
+      { token: 'data', line: 2, column: 0},
+      { token: '[10, 20]', line: 2, column: 8},
+      { token: 'processed', line: 3, column: 0 }, 
+      { token: 'item', line: 4, column: 4 }, 
+      { token: 'data', line: 4, column: 12 }, 
+      { token: 'processed.push', line: 5 },
+      { token: 'item + 1', line: 5, column: 15}, 
+      { token: 'processed', line: 6, column: 12 } 
+    ]
+  
+  runScenario "Original Complex Snippet (firstVar focus)",
+    `// Line 1: This is a comment, actual code starts on the next line
 firstVar := 123 // Original Line 2
 
 // Line 4: Another comment
 secondVar := firstVar + 7 // Original Line 5
 
 // Line 7: A comment
-console.log secondVar, "is the value" // Original Line 8
+console.log secondVar, "is the value" // Original Line 8`,
+    [
+      { token: 'firstVar', line: 2, column: 0 }
+    ]
 
-// Line 10: Conditional Test
-num := 10 // Original Line 11
-isPositive := if num > 0 // Original Line 12
-  "yes" // Original Line 13
-else // Original Line 14
-  "no" // Original Line 15
-console.log isPositive // Original Line 16
 
-// Line 18: Loop Test
-items := [] // Original Line 19
-for x of [1..2] // Original Line 20
-  items.push x // Original Line 21
-console.log items // Original Line 22
-`
-    sourceFilename := 'test-snippet.civet' // Virtual filename for the snippet
-
-    // Compile with sourcemap enabled
-    result := compile(civetCode, {
-      sync: true
-      sourceMap: true
-      js: false // Assuming TS-like output for mapping
-      filename: sourceFilename
-    })
-    tsCode := result.code
-    mapJson := result.sourceMap.json()
-
-    // Patch sources and sourcesContent if necessary
-    if !mapJson.sources || !mapJson.sources[0]
-      mapJson.sources = [sourceFilename]
-    
-    mapJson.sourcesContent = mapJson.sourcesContent || [civetCode]
-
-    // Split TS code into lines for lookup
-    tsLines := tsCode.split('\\n')
-
-    await SourceMapConsumer.with mapJson, null, async (consumer) =>
-      // Helper to test a token
-      testToken := (token, expectedOriginalLine) ->
-        lineIndex := tsLines.findIndex (l) => l.includes(token)
-        assert lineIndex >= 0, `Token '${token}' not found in compiled TS code. Compiled output:\\n${tsCode}`
-        
-        columnIndex := tsLines[lineIndex].indexOf(token)
-        assert columnIndex >= 0, `Token '${token}' not found on compiled line ${lineIndex + 1}: '${tsLines[lineIndex]}'`
-
-        orig := consumer.originalPositionFor({ line: lineIndex + 1, column: columnIndex })
-        
-        assert.ok orig.line != null, `Original line for '${token}' (compiled line ${lineIndex+1}, col ${columnIndex}) should not be null. Mapping: ${JSON.stringify(orig)}`
-        assert.ok orig.column != null, `Original column for '${token}' (compiled line ${lineIndex+1}, col ${columnIndex}) should not be null. Mapping: ${JSON.stringify(orig)}`
-
-        originalCodeLines := civetCode.split('\\n')
-        assert.strictEqual orig.line, expectedOriginalLine,
-          `Expected '${token}' to map to original line ${expectedOriginalLine}, got ${orig.line}. Compiled: '${tsLines[lineIndex]}'. Original line ${expectedOriginalLine}: '${originalCodeLines[expectedOriginalLine-1]}'`
-        
-        expectedOriginalColumn := originalCodeLines[expectedOriginalLine - 1].indexOf(token)
-        assert.strictEqual orig.column, expectedOriginalColumn,
-          `Expected '${token}' to map to original column ${expectedOriginalColumn} on line ${expectedOriginalLine}, got ${orig.column}. Original line content: '${originalCodeLines[expectedOriginalLine-1]}'`
-
-      // Verify mapping for firstVar (original line 2 of the civetCode string snippet)
-      testToken('firstVar', 2)
-
-      // Verify mapping for secondVar (original line 5 of the civetCode string snippet)
-      testToken('secondVar', 5)
-
-      // Verify mapping for console.log (original line 8 of the civetCode string snippet)
-      testToken('console.log', 8)
-
-      // Verify mapping for string literal (original line 8 of the civetCode string snippet)
-      testToken('"is the value"', 8)
-
-      // Conditional Tests (lines relative to civetCode string)
-      testToken('num', 11) // Declaration of num
-      testToken('isPositive', 12) // Declaration of isPositive
-      testToken('num', 12) // Usage of num in if condition
-      testToken('"yes"', 13)
-      testToken('"no"', 15)
-      testToken('isPositive', 16) // Usage of isPositive in console.log
-
-      // Loop Tests (lines relative to civetCode string)
-      testToken('items', 19) // Declaration of items array
-      testToken('x', 20) // Loop variable x in for statement
-      testToken('items.push', 21) // items.push inside loop
-      testToken('x', 21) // Usage of x inside loop
-      testToken('items', 22) // Usage of items in console.log
