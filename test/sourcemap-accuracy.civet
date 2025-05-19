@@ -21,10 +21,79 @@ clearLog := () -> fs.writeFileSync(logFilePath, '', 'utf8')
 appendToLog := (content: string) -> fs.appendFileSync(logFilePath, content, 'utf8')
 
 interface TokenTest {
-  token: string
-  line: number
-  column?: number
+  tokenDescription: string // For logging, e.g., "data in for loop"
+  
+  // ---- Location of the token in the GENERATED TypeScript code ----
+  generatedTSLine: number    // 1-based line number in the generated TS
+  generatedTSColumn: number  // 0-based column number for the start of the token in TS
+
+  // ---- Expected location in the ORIGINAL Civet code ----
+  expectedOriginalCivetLine: number   // 1-based
+  expectedOriginalCivetColumn: number // 0-based 
+  
+  // Optional: original token string if different from description, used for logging/verification
+  originalCivetTokenString?: string 
 }
+
+// VLQ Decoding Utilities (adapted from Civet's sourcemap.civet for standalone use in this test script)
+VLQ_SHIFT            := 5
+VLQ_CONTINUATION_BIT := 1 << VLQ_SHIFT
+VLQ_VALUE_MASK       := VLQ_CONTINUATION_BIT - 1
+
+BASE64_CHARS_DECODER := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+vlqTableDecoder := new Uint8Array(128)
+do
+  i .= 0
+  l .= vlqTableDecoder.length
+  while i < l
+    vlqTableDecoder[i] = 0xFF
+    i++
+  i = 0
+  l = BASE64_CHARS_DECODER.length
+  while i < l
+    vlqTableDecoder[BASE64_CHARS_DECODER.charCodeAt(i)] = i
+    i++
+
+decodeSingleVLQSegment := (mappingSegment: string): number[] ->
+  i .= 0
+  l .= mappingSegment.length
+  result: number[] .= []
+  currentMappingIndex .= 0
+
+  // Scan over the input segment
+  while currentMappingIndex < l
+    shift .= 0
+    vlq .= 0
+    v .= 0
+
+    while true
+      if currentMappingIndex >= l
+        throw new Error('Unexpected early end of VLQ mapping data in segment')
+      
+      char := mappingSegment.charCodeAt(currentMappingIndex)
+      if (char & 0x7F) != char // Check if it's a valid ASCII char
+        throw new Error(`Invalid mapping character code: ${char} in segment: ${mappingSegment}`)
+      
+      index := vlqTableDecoder[char & 0x7F]
+      if (index is 0xFF)
+        throw new Error(`Invalid mapping character: "${mappingSegment[currentMappingIndex]}" in segment: ${mappingSegment}`)
+      
+      currentMappingIndex++
+
+      // Decode the byte
+      vlq |= (index & VLQ_VALUE_MASK) << shift
+      shift += VLQ_SHIFT
+
+      // Stop if there's no continuation bit
+      break if (index & VLQ_CONTINUATION_BIT) is 0
+
+    // Recover the signed value
+    if vlq & 1
+      v = -(vlq >> 1)
+    else
+      v = vlq >> 1
+    result.push v
+  return result
 
 describe "source map accuracy", ->
   before ->
@@ -76,89 +145,91 @@ describe "source map accuracy", ->
 
       if testWithLibrary == 'source-map'
         await SourceMapConsumer.with mapJson, null, async (consumer) =>
-          testToken := (token: string, expectedOriginalLine: number, expectedOriginalColumnOverride?: number): {status: string, details: string[], assertionMessage: string | undefined} ->
+          testToken := (testSpec: TokenTest): {status: string, details: string[], assertionMessage: string | undefined} ->
             tokenLog: string[] .= []
-            tokenLog.push(`\n--- Testing Token: '${token}' (with source-map) ---`)
+            tokenLog.push(`\n--- Testing Token: '${testSpec.tokenDescription}' (with source-map) ---`)
             
-            assertionMessagePrefix := `Token '${token}' in scenario '${scenarioName}'`
-            generatedTSPositionString .= "N/A"
+            assertionMessagePrefix := `Token '${testSpec.tokenDescription}' in scenario '${scenarioName}'`
+            generatedTSPositionString .= `TS Line ${testSpec.generatedTSLine}, Col ${testSpec.generatedTSColumn}`
             mappedOriginalPositionString .= "N/A"
-            expectedOriginalPositionString .= `Civet Line ${expectedOriginalLine}`
+            expectedOriginalPositionString .= `Civet Line ${testSpec.expectedOriginalCivetLine}, Col ${testSpec.expectedOriginalCivetColumn}`
             currentTokenStatus .= "PASSED"
             currentTokenAssertionMessage: string | undefined .= undefined
 
+            queriedTSLine_1based := testSpec.generatedTSLine
+            queriedTSColumn_0based := testSpec.generatedTSColumn
+
             try
-              lineIndex := generatedTsLines.findIndex (l) => l.includes(token)
-              if lineIndex < 0
-                currentTokenStatus = `FAILED: Token not found in compiled TS code.`
-                currentTokenAssertionMessage = `${assertionMessagePrefix} not found in compiled TS code.`
+              if queriedTSLine_1based <= 0 || queriedTSLine_1based > generatedTsLines.length
+                currentTokenStatus = `FAILED: Generated TS Line ${queriedTSLine_1based} is out of bounds (1 to ${generatedTsLines.length}).`
+                currentTokenAssertionMessage = `${assertionMessagePrefix} specified generated TS line ${queriedTSLine_1based} is out of bounds.`
+              else if queriedTSColumn_0based < 0 || queriedTSColumn_0based >= generatedTsLines[queriedTSLine_1based - 1].length
+                currentTokenStatus = `FAILED: Generated TS Column ${queriedTSColumn_0based} is out of bounds for line ${queriedTSLine_1based} (length ${generatedTsLines[queriedTSLine_1based - 1].length}).`
+                currentTokenAssertionMessage = `${assertionMessagePrefix} specified generated TS column ${queriedTSColumn_0based} is out of bounds for line ${queriedTSLine_1based}.`
               else
-                columnIndex := generatedTsLines[lineIndex].indexOf(token)
-                if columnIndex < 0 
-                  currentTokenStatus = `FAILED: Token somehow not found at column on its line.`
-                  currentTokenAssertionMessage = `${assertionMessagePrefix} not found at column on TS line ${lineIndex + 1}.`
-                else
-                  generatedTSPositionString = `TS Line ${lineIndex + 1}, Col ${columnIndex}`
-                  orig := consumer.originalPositionFor({ line: lineIndex + 1, column: columnIndex })
-                  
-                  mappedOriginalPositionString = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
-                  
-                  if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined) {
-                      tokenLog.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
-                  }
-                  if (orig.source === null || orig.source === undefined) {
-                      tokenLog.push(`  CRITICAL: Mapped source is null or undefined. This often indicates a broken mapping.`)
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Undefined Source)"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Mapped source is null or undefined.`
-                  }
+                orig := consumer.originalPositionFor({ line: queriedTSLine_1based, column: queriedTSColumn_0based })
+                
+                mappedOriginalPositionString = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
+                
+                if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined) {
+                    tokenLog.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
+                }
+                if (orig.source === null || orig.source === undefined) {
+                    tokenLog.push(`  CRITICAL: Mapped source is null or undefined. This often indicates a broken mapping.`)
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Undefined Source)"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Mapped source is null or undefined.`
+                }
 
-                  if (orig.line == null || orig.column == null) {
-                    if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Null Original Position)"
-                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}`
-                  } else {
-                    const originalCodeLines = civetCode.split('\n');
-                    expectedOriginalColumn := if typeof expectedOriginalColumnOverride is 'number'
-                      expectedOriginalColumnOverride
-                    else if (expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length)
-                      originalCodeLines[expectedOriginalLine - 1].indexOf(token)
-                    else
-                      -1 
-
-                    if (expectedOriginalColumn == -1 && typeof expectedOriginalColumnOverride !== 'number') {
-                         tokenLog.push(`  WARNING: Could not determine expected original column for '${token}' on line ${expectedOriginalLine}. Original line content: '${expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length ? originalCodeLines[expectedOriginalLine-1] : "Line out of bounds"}'.indexOf('${token}')`)
-                    }
-                    expectedOriginalPositionString = `Civet Line ${expectedOriginalLine}, Col ${expectedOriginalColumn === -1 ? 'N/A' : expectedOriginalColumn}`
-                    
-                    if (orig.line !== expectedOriginalLine) {
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Line Mismatch)`
-                      else if (!currentTokenStatus.includes("Line Mismatch")) currentTokenStatus += " + Line Mismatch"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} LINE MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
-                    }
-                    
-                    if (orig.column !== expectedOriginalColumn && expectedOriginalColumn !== -1) { 
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Column Mismatch)`
-                      else if (!currentTokenStatus.includes("Column Mismatch")) currentTokenStatus += " + Column Mismatch"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} COLUMN MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
-                    }
+                if (orig.line == null || orig.column == null) {
+                  if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Null Original Position)"
+                  if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}`
+                } else {
+                  if (orig.line !== testSpec.expectedOriginalCivetLine) {
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Line Mismatch)`
+                    else if (!currentTokenStatus.includes("Line Mismatch")) currentTokenStatus += " + Line Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} LINE MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
                   }
+                  
+                  if (orig.column !== testSpec.expectedOriginalCivetColumn) { 
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Column Mismatch)`
+                    else if (!currentTokenStatus.includes("Column Mismatch")) currentTokenStatus += " + Column Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} COLUMN MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
+                  }
+                }
             catch e: any
               currentTokenStatus = `FAILED (Unexpected Exception: ${e.message})`
               currentTokenAssertionMessage = `${assertionMessagePrefix} UNEXPECTED EXCEPTION: ${e.message}`
             
             finally
-              tokenLog.push(`  Generated Position: ${generatedTSPositionString}`)
+              tokenLog.push(`  Target Generated  : ${generatedTSPositionString}`)
               tokenLog.push(`  Expected Original : ${expectedOriginalPositionString}`)
               tokenLog.push(`  Actual Mapped     : ${mappedOriginalPositionString}`)
               tokenLog.push(`  Status            : ${currentTokenStatus}`)
               if (currentTokenAssertionMessage && currentTokenStatus !== "PASSED") {
                 tokenLog.push(`  Failure Reason    : ${currentTokenAssertionMessage}`)
               }
-              tokenLog.push(`--- End Token: '${token}' ---`)
+              if (currentTokenStatus !== "PASSED") {
+                const mappingLines = mapJson.mappings.split(';');
+                const rawLineVLQ = mappingLines[queriedTSLine_1based - 1];
+                tokenLog.push(`  Raw VLQ for TS Line ${queriedTSLine_1based}: ${rawLineVLQ}`);
+                if (rawLineVLQ && rawLineVLQ.length > 0) {
+                  tokenLog.push(`  Decoded Segments for TS Line ${queriedTSLine_1based}:`)
+                  rawLineVLQ.split(',').forEach((segmentVLQ, idx) => {
+                    try {
+                      decodedSegment := decodeSingleVLQSegment(segmentVLQ)
+                      tokenLog.push(`    - Segment ${idx + 1} ('${segmentVLQ}'): [${decodedSegment.join(', ')}]`)
+                    } catch (decodeError: any) {
+                      tokenLog.push(`    - Segment ${idx + 1} ('${segmentVLQ}'): FAILED TO DECODE (${decodeError.message})`)
+                    }
+                  })
+                }
+              }
+              tokenLog.push(`--- End Token: '${testSpec.tokenDescription}' ---`)
               
             return { status: currentTokenStatus, details: tokenLog, assertionMessage: currentTokenAssertionMessage }
 
           for testSpec of tokenTests
-              result: {status: string, details: string[], assertionMessage: string | undefined} .= testToken(testSpec.token, testSpec.line, testSpec.column)
+              result: {status: string, details: string[], assertionMessage: string | undefined} .= testToken(testSpec)
               tokenVerificationLogs.push(result.details.join('\n'))
               if (result.status !== "PASSED")
                 overallScenarioStatus = "FAILED"
@@ -177,94 +248,94 @@ describe "source map accuracy", ->
           console.log("Test mapping result:", testMapping)
           
           // Replicate the testToken logic but using jridgewellOriginalPositionFor
-          testTokenJR := (token: string, expectedOriginalLine: number, expectedOriginalColumnOverride?: number): {status: string, details: string[], assertionMessage: string | undefined} ->
+          testTokenJR := (testSpec: TokenTest): {status: string, details: string[], assertionMessage: string | undefined} ->
             tokenLog: string[] .= []
-            tokenLog.push(`\n--- Testing Token: '${token}' (with @jridgewell/trace-mapping) ---`)
+            tokenLog.push(`\n--- Testing Token: '${testSpec.tokenDescription}' (with @jridgewell/trace-mapping) ---`)
             
-            assertionMessagePrefix := `Token '${token}' in scenario '${scenarioName}'`
-            generatedTSPositionString .= "N/A"
+            assertionMessagePrefix := `Token '${testSpec.tokenDescription}' in scenario '${scenarioName}'`
+            generatedTSPositionString .= `TS Line ${testSpec.generatedTSLine}, Col ${testSpec.generatedTSColumn}`
             mappedOriginalPositionString .= "N/A"
-            expectedOriginalPositionString .= `Civet Line ${expectedOriginalLine}`
+            expectedOriginalPositionString .= `Civet Line ${testSpec.expectedOriginalCivetLine}, Col ${testSpec.expectedOriginalCivetColumn}`
             currentTokenStatus .= "PASSED"
             currentTokenAssertionMessage: string | undefined .= undefined
 
+            queriedTSLine_1based := testSpec.generatedTSLine
+            queriedTSColumn_0based := testSpec.generatedTSColumn
+            
             try
-              lineIndex := generatedTsLines.findIndex (l) => l.includes(token)
-              if lineIndex < 0
-                currentTokenStatus = `FAILED: Token not found in compiled TS code.`
-                currentTokenAssertionMessage = `${assertionMessagePrefix} not found in compiled TS code.`
+              if queriedTSLine_1based <= 0 || queriedTSLine_1based > generatedTsLines.length
+                currentTokenStatus = `FAILED: Generated TS Line ${queriedTSLine_1based} is out of bounds (1 to ${generatedTsLines.length}).`
+                currentTokenAssertionMessage = `${assertionMessagePrefix} specified generated TS line ${queriedTSLine_1based} is out of bounds.`
+              else if queriedTSColumn_0based < 0 || queriedTSColumn_0based >= generatedTsLines[queriedTSLine_1based - 1].length
+                currentTokenStatus = `FAILED: Generated TS Column ${queriedTSColumn_0based} is out of bounds for line ${queriedTSLine_1based} (length ${generatedTsLines[queriedTSLine_1based - 1].length}).`
+                currentTokenAssertionMessage = `${assertionMessagePrefix} specified generated TS column ${queriedTSColumn_0based} is out of bounds for line ${queriedTSLine_1based}.`
               else
-                columnIndex := generatedTsLines[lineIndex].indexOf(token)
-                if columnIndex < 0 
-                  currentTokenStatus = `FAILED: Token somehow not found at column on its line.`
-                  currentTokenAssertionMessage = `${assertionMessagePrefix} not found at column on TS line ${lineIndex + 1}.`
-                else
-                  generatedTSPositionString = `TS Line ${lineIndex + 1}, Col ${columnIndex}`
-                  // @jridgewell/trace-mapping uses 1-based line and 0-based column for query
-                  orig := jridgewellOriginalPositionFor(traceMapInstance, { line: lineIndex + 1, column: columnIndex, bias: LEAST_UPPER_BOUND })
-                  
-                  // It returns 1-based line and 0-based column
-                  mappedOriginalPositionString = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
-                  
-                  if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined) {
-                      tokenLog.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
-                  }
-                  if (orig.source === null || orig.source === undefined) {
-                      tokenLog.push(`  CRITICAL: Mapped source is null or undefined. This often indicates a broken mapping.`)
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Undefined Source)"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Mapped source is null or undefined.`
-                  }
+                // @jridgewell/trace-mapping uses 1-based line and 0-based column for query
+                orig := jridgewellOriginalPositionFor(traceMapInstance, { line: queriedTSLine_1based, column: queriedTSColumn_0based, bias: LEAST_UPPER_BOUND })
+                
+                // It returns 1-based line and 0-based column
+                mappedOriginalPositionString = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
+                
+                if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined) {
+                    tokenLog.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
+                }
+                if (orig.source === null || orig.source === undefined) {
+                    tokenLog.push(`  CRITICAL: Mapped source is null or undefined. This often indicates a broken mapping.`)
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Undefined Source)"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Mapped source is null or undefined.`
+                }
 
-                  if (orig.line == null || orig.column == null) {
-                    if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Null Original Position)"
-                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}`
-                  } else {
-                    const originalCodeLines = civetCode.split('\n');
-                    // Expected column is 0-based for comparison with jridgewell
-                    expectedOriginalColumnJR := if typeof expectedOriginalColumnOverride is 'number'
-                      expectedOriginalColumnOverride // Assume override is already 0-based if provided for JR
-                    else if (expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length)
-                      originalCodeLines[expectedOriginalLine - 1].indexOf(token)
-                    else
-                      -1 
-
-                    if (expectedOriginalColumnJR == -1 && typeof expectedOriginalColumnOverride !== 'number') {
-                         tokenLog.push(`  WARNING: Could not determine expected original column for '${token}' on line ${expectedOriginalLine}. Original line content: '${expectedOriginalLine > 0 && expectedOriginalLine <= originalCodeLines.length ? originalCodeLines[expectedOriginalLine-1] : "Line out of bounds"}'.indexOf('${token}')`)
-                    }
-                    // Display 1-based line and 0-based column for expected
-                    expectedOriginalPositionString = `Civet Line ${expectedOriginalLine}, Col ${expectedOriginalColumnJR === -1 ? 'N/A' : expectedOriginalColumnJR}`
-                    
-                    if (orig.line !== expectedOriginalLine) {
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Line Mismatch)`
-                      else if (!currentTokenStatus.includes("Line Mismatch")) currentTokenStatus += " + Line Mismatch"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} LINE MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
-                    }
-                    
-                    // Compare 0-based columns
-                    if (orig.column !== expectedOriginalColumnJR && expectedOriginalColumnJR !== -1) { 
-                      if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Column Mismatch)`
-                      else if (!currentTokenStatus.includes("Column Mismatch")) currentTokenStatus += " + Column Mismatch"
-                      if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} COLUMN MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
-                    }
+                if (orig.line == null || orig.column == null) {
+                  if (currentTokenStatus === "PASSED") currentTokenStatus = "FAILED (Null Original Position)"
+                  if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}`
+                } else {
+                  if (orig.line !== testSpec.expectedOriginalCivetLine) {
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Line Mismatch)`
+                    else if (!currentTokenStatus.includes("Line Mismatch")) currentTokenStatus += " + Line Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} LINE MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
                   }
+                  
+                  // Compare 0-based columns
+                  if (orig.column !== testSpec.expectedOriginalCivetColumn) { 
+                    if (currentTokenStatus === "PASSED") currentTokenStatus = `FAILED (Column Mismatch)`
+                    else if (!currentTokenStatus.includes("Column Mismatch")) currentTokenStatus += " + Column Mismatch"
+                    if (!currentTokenAssertionMessage) currentTokenAssertionMessage = `${assertionMessagePrefix} COLUMN MISMATCH. Expected: ${expectedOriginalPositionString}. Actual: ${mappedOriginalPositionString}.`
+                  }
+                }
             catch e: any
               currentTokenStatus = `FAILED (Unexpected Exception: ${e.message})`
               currentTokenAssertionMessage = `${assertionMessagePrefix} UNEXPECTED EXCEPTION: ${e.message}`
           
             finally
-              tokenLog.push(`  Generated Position: ${generatedTSPositionString}`)
+              tokenLog.push(`  Target Generated  : ${generatedTSPositionString}`)
               tokenLog.push(`  Expected Original : ${expectedOriginalPositionString}`)
               tokenLog.push(`  Actual Mapped     : ${mappedOriginalPositionString}`)
               tokenLog.push(`  Status            : ${currentTokenStatus}`)
               if (currentTokenAssertionMessage && currentTokenStatus !== "PASSED") {
                 tokenLog.push(`  Failure Reason    : ${currentTokenAssertionMessage}`)
               }
-              tokenLog.push(`--- End Token: '${token}' ---`)
+              if (currentTokenStatus !== "PASSED") {
+                const mappingLines = mapJson.mappings.split(';');
+                const rawLineVLQ = mappingLines[queriedTSLine_1based - 1];
+                tokenLog.push(`  Raw VLQ for TS Line ${queriedTSLine_1based}: ${rawLineVLQ}`);
+                if (rawLineVLQ && rawLineVLQ.length > 0) {
+                  tokenLog.push(`  Decoded Segments for TS Line ${queriedTSLine_1based}:`)
+                  rawLineVLQ.split(',').forEach((segmentVLQ, idx) => {
+                    try {
+                      decodedSegment := decodeSingleVLQSegment(segmentVLQ)
+                      tokenLog.push(`    - Segment ${idx + 1} ('${segmentVLQ}'): [${decodedSegment.join(', ')}]`)
+                    } catch (decodeError: any) {
+                      tokenLog.push(`    - Segment ${idx + 1} ('${segmentVLQ}'): FAILED TO DECODE (${decodeError.message})`)
+                    }
+                  })
+                }
+              }
+              tokenLog.push(`--- End Token: '${testSpec.tokenDescription}' ---`)
             
             return { status: currentTokenStatus, details: tokenLog, assertionMessage: currentTokenAssertionMessage }
 
           for testSpec of tokenTests
-              result: {status: string, details: string[], assertionMessage: string | undefined} .= testTokenJR(testSpec.token, testSpec.line, testSpec.column)
+              result: {status: string, details: string[], assertionMessage: string | undefined} .= testTokenJR(testSpec)
               tokenVerificationLogs.push(result.details.join('\n'))
               if (result.status !== "PASSED")
                 overallScenarioStatus = "FAILED"
@@ -291,10 +362,10 @@ describe "source map accuracy", ->
 myVar := 123 // Civet Line 2
 another := "text" // Civet Line 3`,
     [
-      { token: 'myVar', line: 2 }, 
-      { token: '123', line: 2 },   
-      { token: 'another', line: 3 },
-      { token: '"text"', line: 3 }
+      { tokenDescription: 'myVar keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'myVar' }, 
+      { tokenDescription: '123 literal', generatedTSLine: 2, generatedTSColumn: 14, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 9, originalCivetTokenString: '123' },   
+      { tokenDescription: 'another keyword', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'another' },
+      { tokenDescription: '"text" literal', generatedTSLine: 3, generatedTSColumn: 16, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 11, originalCivetTokenString: '"text"' }
     ]
   
   runScenario "Variable Reassignment and Expressions",
@@ -302,9 +373,11 @@ another := "text" // Civet Line 3`,
 count := 0 // Civet Line 2
 result := count * 2 // Civet Line 3`,
     [
-      { token: 'count', line: 2, column: 0 }, 
-      { token: 'result', line: 3, column: 0 },
-      { token: 'count * 2', line: 3, column: 9 }
+      { tokenDescription: 'count keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'count' }, 
+      { tokenDescription: 'result keyword', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'result' },
+      { tokenDescription: 'count in expression', generatedTSLine: 3, generatedTSColumn: 15, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 9, originalCivetTokenString: 'count' }, // TS: const result = count * 2; Civet: result := count * 2
+      { tokenDescription: '* in expression', generatedTSLine: 3, generatedTSColumn: 21, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 15, originalCivetTokenString: '*' },
+      { tokenDescription: '2 in expression', generatedTSLine: 3, generatedTSColumn: 23, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 17, originalCivetTokenString: '2' }
     ]
 
   runScenario "Conditional Statement (if/else)",
@@ -316,13 +389,14 @@ else // Civet Line 5
   "Non-Positive" // Civet Line 6
 console.log message // Civet Line 7`,
     [
-      { token: 'num', line: 2, column: 0 }, 
-      { token: 'message', line: 3, column: 0 }, 
-      { token: 'num > 0', line: 3, column: 14 }, 
-      { token: '"Positive"', line: 4 },
-      { token: '"Non-Positive"', line: 6 },
-      { token: 'console.log', line: 7 },
-      { token: 'message', line: 7, column: 12 } 
+      { tokenDescription: 'num keyword', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0 }, 
+      { tokenDescription: 'message keyword for const', generatedTSLine: 8, generatedTSColumn: 8, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'message' }, // TS: };const message =ref 
+      { tokenDescription: 'num in condition', generatedTSLine: 3, generatedTSColumn: 12, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 14, originalCivetTokenString: 'num' }, // TS: let ref;if (num > 0)
+      { tokenDescription: '> in condition', generatedTSLine: 3, generatedTSColumn: 16, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 18, originalCivetTokenString: '>' },
+      { tokenDescription: '"Positive" string', generatedTSLine: 4, generatedTSColumn: 8, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 2 },
+      { tokenDescription: '"Non-Positive" string', generatedTSLine: 7, generatedTSColumn: 8, expectedOriginalCivetLine: 6, expectedOriginalCivetColumn: 2 },
+      { tokenDescription: 'console.log call', generatedTSLine: 9, generatedTSColumn: 0, expectedOriginalCivetLine: 7, expectedOriginalCivetColumn: 0, originalCivetTokenString: 'console' }, // console.log
+      { tokenDescription: 'message arg in console.log', generatedTSLine: 9, generatedTSColumn: 12, expectedOriginalCivetLine: 7, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'message' } // console.log(message)
     ]
   
   runScenario "Loop Construct (for...of)",
@@ -333,12 +407,14 @@ for item of data // Civet Line 4
   processed.push item + 1 // Civet Line 5
 console.log processed // Civet Line 6`,
     [
-      { token: 'data', line: 2, column: 0},
-      { token: '[10, 20]', line: 2, column: 8},
-      { token: 'processed', line: 3, column: 0 }, 
-      { token: 'item', line: 4, column: 4 }, 
-      { token: 'data', line: 4, column: 12 }, 
-      { token: 'processed.push', line: 5 },
-      { token: 'item + 1', line: 5, column: 15}, 
-      { token: 'processed', line: 6, column: 12 } 
+      { tokenDescription: 'data declaration', generatedTSLine: 2, generatedTSColumn: 6, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 0 },
+      { tokenDescription: '[10, 20] array', generatedTSLine: 2, generatedTSColumn: 13, expectedOriginalCivetLine: 2, expectedOriginalCivetColumn: 8 },
+      { tokenDescription: 'processed declaration', generatedTSLine: 3, generatedTSColumn: 6, expectedOriginalCivetLine: 3, expectedOriginalCivetColumn: 0 }, 
+      { tokenDescription: 'item in for loop declaration', generatedTSLine: 4, generatedTSColumn: 11, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 4, originalCivetTokenString: 'item' }, // TS: for (const item of data)
+      { tokenDescription: 'data in for loop usage', generatedTSLine: 4, generatedTSColumn: 20, expectedOriginalCivetLine: 4, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'data' }, // TS: for (const item of data)
+      { tokenDescription: 'processed in push', generatedTSLine: 5, generatedTSColumn: 2, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 2, originalCivetTokenString: 'processed' }, // TS: processed.push(...)
+      { tokenDescription: 'item in push argument', generatedTSLine: 5, generatedTSColumn: 17, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 15, originalCivetTokenString: 'item'}, // TS: processed.push(item + 1)
+      { tokenDescription: '+ in push argument', generatedTSLine: 5, generatedTSColumn: 22, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 20, originalCivetTokenString: '+'},
+      { tokenDescription: '1 in push argument', generatedTSLine: 5, generatedTSColumn: 24, expectedOriginalCivetLine: 5, expectedOriginalCivetColumn: 22, originalCivetTokenString: '1'},
+      { tokenDescription: 'processed in console.log', generatedTSLine: 7, generatedTSColumn: 12, expectedOriginalCivetLine: 6, expectedOriginalCivetColumn: 12, originalCivetTokenString: 'processed' } // TS: console.log(processed)
     ]

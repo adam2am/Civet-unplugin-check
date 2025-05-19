@@ -32,37 +32,37 @@ SCENARIO OVERALL STATUS: ✅ PASSED
 
 --- TOKEN MAPPING VERIFICATION ---
 
---- Testing Token: 'myVar' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'myVar keyword' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Simple Variable Declaration.civet').
-  Generated Position: TS Line 2, Col 6
+  Target Generated  : TS Line 2, Col 6
   Expected Original : Civet Line 2, Col 0
   Actual Mapped     : Civet Line 2, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'myVar' ---
+--- End Token: 'myVar keyword' ---
 
---- Testing Token: '123' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '123 literal' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Simple Variable Declaration.civet').
-  Generated Position: TS Line 2, Col 14
+  Target Generated  : TS Line 2, Col 14
   Expected Original : Civet Line 2, Col 9
   Actual Mapped     : Civet Line 2, Col 9 (Source: null/undefined)
   Status            : PASSED
---- End Token: '123' ---
+--- End Token: '123 literal' ---
 
---- Testing Token: 'another' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'another keyword' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Simple Variable Declaration.civet').
-  Generated Position: TS Line 3, Col 6
+  Target Generated  : TS Line 3, Col 6
   Expected Original : Civet Line 3, Col 0
   Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'another' ---
+--- End Token: 'another keyword' ---
 
---- Testing Token: '"text"' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '"text" literal' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Simple Variable Declaration.civet').
-  Generated Position: TS Line 3, Col 16
+  Target Generated  : TS Line 3, Col 16
   Expected Original : Civet Line 3, Col 11
   Actual Mapped     : Civet Line 3, Col 11 (Source: null/undefined)
   Status            : PASSED
---- End Token: '"text"' ---
+--- End Token: '"text" literal' ---
 --- END SCENARIO: Simple Variable Declaration ---
 
 
@@ -95,30 +95,96 @@ SCENARIO OVERALL STATUS: 🚧 FAILED
 
 --- TOKEN MAPPING VERIFICATION ---
 
---- Testing Token: 'count' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'count keyword' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Variable Reassignment and Expressions.civet').
-  Generated Position: TS Line 2, Col 6
+  Target Generated  : TS Line 2, Col 6
   Expected Original : Civet Line 2, Col 0
   Actual Mapped     : Civet Line 2, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'count' ---
+--- End Token: 'count keyword' ---
 
---- Testing Token: 'result' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'result keyword' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Variable Reassignment and Expressions.civet').
-  Generated Position: TS Line 3, Col 6
+  Target Generated  : TS Line 3, Col 6
   Expected Original : Civet Line 3, Col 0
   Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'result' ---
+--- End Token: 'result keyword' ---
 
---- Testing Token: 'count * 2' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'count in expression' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Variable Reassignment and Expressions.civet').
-  Generated Position: TS Line 3, Col 15
+  Target Generated  : TS Line 3, Col 15
   Expected Original : Civet Line 3, Col 9
   Actual Mapped     : Civet Line 3, Col 10 (Source: null/undefined)
   Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token 'count * 2' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 9. Actual: Civet Line 3, Col 10 (Source: null/undefined).
---- End Token: 'count * 2' ---
+  Failure Reason    : Token 'count in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 9. Actual: Civet Line 3, Col 10 (Source: null/undefined).
+  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
+  Decoded Segments for TS Line 3:
+    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('AAAM'): [0, 0, 0, 6]
+    - Segment 4 ('MAAN'): [6, 0, 0, -6]
+    - Segment 5 ('MAAM'): [6, 0, 0, 6]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('KAAK'): [5, 0, 0, 5]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+--- End Token: 'count in expression' ---
+
+--- Testing Token: '* in expression' (with @jridgewell/trace-mapping) ---
+  WARNING: Mapped source ('') differs from expected ('Variable Reassignment and Expressions.civet').
+  Target Generated  : TS Line 3, Col 21
+  Expected Original : Civet Line 3, Col 15
+  Actual Mapped     : Civet Line 3, Col 16 (Source: null/undefined)
+  Status            : FAILED (Column Mismatch)
+  Failure Reason    : Token '* in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 15. Actual: Civet Line 3, Col 16 (Source: null/undefined).
+  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
+  Decoded Segments for TS Line 3:
+    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('AAAM'): [0, 0, 0, 6]
+    - Segment 4 ('MAAN'): [6, 0, 0, -6]
+    - Segment 5 ('MAAM'): [6, 0, 0, 6]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('KAAK'): [5, 0, 0, 5]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+--- End Token: '* in expression' ---
+
+--- Testing Token: '2 in expression' (with @jridgewell/trace-mapping) ---
+  WARNING: Mapped source ('') differs from expected ('Variable Reassignment and Expressions.civet').
+  Target Generated  : TS Line 3, Col 23
+  Expected Original : Civet Line 3, Col 17
+  Actual Mapped     : Civet Line 3, Col 18 (Source: null/undefined)
+  Status            : FAILED (Column Mismatch)
+  Failure Reason    : Token '2 in expression' in scenario 'Variable Reassignment and Expressions' COLUMN MISMATCH. Expected: Civet Line 3, Col 17. Actual: Civet Line 3, Col 18 (Source: null/undefined).
+  Raw VLQ for TS Line 3: AAC1B,AAAA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC
+  Decoded Segments for TS Line 3:
+    - Segment 1 ('AAC1B'): [0, 0, 1, -26]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('AAAM'): [0, 0, 0, 6]
+    - Segment 4 ('MAAN'): [6, 0, 0, -6]
+    - Segment 5 ('MAAM'): [6, 0, 0, 6]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('KAAK'): [5, 0, 0, 5]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+--- End Token: '2 in expression' ---
 --- END SCENARIO: Variable Reassignment and Expressions ---
 
 
@@ -157,66 +223,73 @@ Generated Sourcemap JSON:
   ]
 }
 
-SCENARIO OVERALL STATUS: 🚧 FAILED
+SCENARIO OVERALL STATUS: ✅ PASSED
 
 --- TOKEN MAPPING VERIFICATION ---
 
---- Testing Token: 'num' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'num keyword' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 2, Col 6
+  Target Generated  : TS Line 2, Col 6
   Expected Original : Civet Line 2, Col 0
   Actual Mapped     : Civet Line 2, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'num' ---
+--- End Token: 'num keyword' ---
 
---- Testing Token: 'message' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'message keyword for const' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 8, Col 8
+  Target Generated  : TS Line 8, Col 8
   Expected Original : Civet Line 3, Col 0
   Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'message' ---
+--- End Token: 'message keyword for const' ---
 
---- Testing Token: 'num > 0' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'num in condition' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 3, Col 12
+  Target Generated  : TS Line 3, Col 12
   Expected Original : Civet Line 3, Col 14
   Actual Mapped     : Civet Line 3, Col 14 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'num > 0' ---
+--- End Token: 'num in condition' ---
 
---- Testing Token: '"Positive"' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '> in condition' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 4, Col 8
+  Target Generated  : TS Line 3, Col 16
+  Expected Original : Civet Line 3, Col 18
+  Actual Mapped     : Civet Line 3, Col 18 (Source: null/undefined)
+  Status            : PASSED
+--- End Token: '> in condition' ---
+
+--- Testing Token: '"Positive" string' (with @jridgewell/trace-mapping) ---
+  WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
+  Target Generated  : TS Line 4, Col 8
   Expected Original : Civet Line 4, Col 2
   Actual Mapped     : Civet Line 4, Col 2 (Source: null/undefined)
   Status            : PASSED
---- End Token: '"Positive"' ---
+--- End Token: '"Positive" string' ---
 
---- Testing Token: '"Non-Positive"' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '"Non-Positive" string' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 7, Col 8
+  Target Generated  : TS Line 7, Col 8
   Expected Original : Civet Line 6, Col 2
   Actual Mapped     : Civet Line 6, Col 2 (Source: null/undefined)
   Status            : PASSED
---- End Token: '"Non-Positive"' ---
+--- End Token: '"Non-Positive" string' ---
 
---- Testing Token: 'console.log' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'console.log call' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 9, Col 0
+  Target Generated  : TS Line 9, Col 0
   Expected Original : Civet Line 7, Col 0
   Actual Mapped     : Civet Line 7, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'console.log' ---
+--- End Token: 'console.log call' ---
 
---- Testing Token: 'message' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'message arg in console.log' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Conditional Statement (if/else).civet').
-  Generated Position: TS Line 8, Col 8
+  Target Generated  : TS Line 9, Col 12
   Expected Original : Civet Line 7, Col 12
-  Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
-  Status            : FAILED (Line Mismatch) + Column Mismatch
-  Failure Reason    : Token 'message' in scenario 'Conditional Statement (if/else)' LINE MISMATCH. Expected: Civet Line 7, Col 12. Actual: Civet Line 3, Col 0 (Source: null/undefined).
---- End Token: 'message' ---
+  Actual Mapped     : Civet Line 7, Col 12 (Source: null/undefined)
+  Status            : PASSED
+--- End Token: 'message arg in console.log' ---
 --- END SCENARIO: Conditional Statement (if/else) ---
 
 
@@ -256,70 +329,154 @@ SCENARIO OVERALL STATUS: 🚧 FAILED
 
 --- TOKEN MAPPING VERIFICATION ---
 
---- Testing Token: 'data' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'data declaration' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 2, Col 6
+  Target Generated  : TS Line 2, Col 6
   Expected Original : Civet Line 2, Col 0
   Actual Mapped     : Civet Line 2, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'data' ---
+--- End Token: 'data declaration' ---
 
---- Testing Token: '[10, 20]' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '[10, 20] array' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 2, Col 13
+  Target Generated  : TS Line 2, Col 13
   Expected Original : Civet Line 2, Col 8
   Actual Mapped     : Civet Line 2, Col 8 (Source: null/undefined)
   Status            : PASSED
---- End Token: '[10, 20]' ---
+--- End Token: '[10, 20] array' ---
 
---- Testing Token: 'processed' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'processed declaration' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 3, Col 6
+  Target Generated  : TS Line 3, Col 6
   Expected Original : Civet Line 3, Col 0
   Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'processed' ---
+--- End Token: 'processed declaration' ---
 
---- Testing Token: 'item' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'item in for loop declaration' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 4, Col 11
+  Target Generated  : TS Line 4, Col 11
   Expected Original : Civet Line 4, Col 4
   Actual Mapped     : Civet Line 4, Col 4 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'item' ---
+--- End Token: 'item in for loop declaration' ---
 
---- Testing Token: 'data' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'data in for loop usage' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 2, Col 6
+  Target Generated  : TS Line 4, Col 20
   Expected Original : Civet Line 4, Col 12
-  Actual Mapped     : Civet Line 2, Col 0 (Source: null/undefined)
-  Status            : FAILED (Line Mismatch) + Column Mismatch
-  Failure Reason    : Token 'data' in scenario 'Loop Construct (for...of)' LINE MISMATCH. Expected: Civet Line 4, Col 12. Actual: Civet Line 2, Col 0 (Source: null/undefined).
---- End Token: 'data' ---
+  Actual Mapped     : Civet Line 4, Col 16 (Source: null/undefined)
+  Status            : FAILED (Column Mismatch)
+  Failure Reason    : Token 'data in for loop usage' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 4, Col 12. Actual: Civet Line 4, Col 16 (Source: null/undefined).
+  Raw VLQ for TS Line 4: AAC/B,AAAA,AAAA,GAAG,CAAC,CAAA,MAAA,IAAI,CAAC,EAAE,CAAC,IAAI,CAAA,CAAA,CAAA,CAAC,eAAe
+  Decoded Segments for TS Line 4:
+    - Segment 1 ('AAC/B'): [0, 0, 1, -31]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('AAAA'): [0, 0, 0, 0]
+    - Segment 4 ('GAAG'): [3, 0, 0, 3]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('CAAA'): [1, 0, 0, 0]
+    - Segment 7 ('MAAA'): [6, 0, 0, 0]
+    - Segment 8 ('IAAI'): [4, 0, 0, 4]
+    - Segment 9 ('CAAC'): [1, 0, 0, 1]
+    - Segment 10 ('EAAE'): [2, 0, 0, 2]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('IAAI'): [4, 0, 0, 4]
+    - Segment 13 ('CAAA'): [1, 0, 0, 0]
+    - Segment 14 ('CAAA'): [1, 0, 0, 0]
+    - Segment 15 ('CAAA'): [1, 0, 0, 0]
+    - Segment 16 ('CAAC'): [1, 0, 0, 1]
+    - Segment 17 ('eAAe'): [15, 0, 0, 15]
+--- End Token: 'data in for loop usage' ---
 
---- Testing Token: 'processed.push' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'processed in push' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 5, Col 2
+  Target Generated  : TS Line 5, Col 2
   Expected Original : Civet Line 5, Col 2
   Actual Mapped     : Civet Line 5, Col 2 (Source: null/undefined)
   Status            : PASSED
---- End Token: 'processed.push' ---
+--- End Token: 'processed in push' ---
 
---- Testing Token: 'item + 1' (with @jridgewell/trace-mapping) ---
+--- Testing Token: 'item in push argument' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 5, Col 17
+  Target Generated  : TS Line 5, Col 17
   Expected Original : Civet Line 5, Col 15
   Actual Mapped     : Civet Line 5, Col 17 (Source: null/undefined)
   Status            : FAILED (Column Mismatch)
-  Failure Reason    : Token 'item + 1' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 15. Actual: Civet Line 5, Col 17 (Source: null/undefined).
---- End Token: 'item + 1' ---
+  Failure Reason    : Token 'item in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 15. Actual: Civet Line 5, Col 17 (Source: null/undefined).
+  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
+  Decoded Segments for TS Line 5:
+    - Segment 1 ('AAChC'): [0, 0, 1, -32]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('EAAE'): [2, 0, 0, 2]
+    - Segment 4 ('SAAS'): [9, 0, 0, 9]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('IAAI'): [4, 0, 0, 4]
+    - Segment 7 ('CAAA'): [1, 0, 0, 0]
+    - Segment 8 ('AAAC'): [0, 0, 0, 1]
+    - Segment 9 ('IAAI'): [4, 0, 0, 4]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('C'): [1]
+--- End Token: 'item in push argument' ---
 
---- Testing Token: 'processed' (with @jridgewell/trace-mapping) ---
+--- Testing Token: '+ in push argument' (with @jridgewell/trace-mapping) ---
   WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
-  Generated Position: TS Line 3, Col 6
+  Target Generated  : TS Line 5, Col 22
+  Expected Original : Civet Line 5, Col 20
+  Actual Mapped     : Civet Line 5, Col 22 (Source: null/undefined)
+  Status            : FAILED (Column Mismatch)
+  Failure Reason    : Token '+ in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 20. Actual: Civet Line 5, Col 22 (Source: null/undefined).
+  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
+  Decoded Segments for TS Line 5:
+    - Segment 1 ('AAChC'): [0, 0, 1, -32]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('EAAE'): [2, 0, 0, 2]
+    - Segment 4 ('SAAS'): [9, 0, 0, 9]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('IAAI'): [4, 0, 0, 4]
+    - Segment 7 ('CAAA'): [1, 0, 0, 0]
+    - Segment 8 ('AAAC'): [0, 0, 0, 1]
+    - Segment 9 ('IAAI'): [4, 0, 0, 4]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('C'): [1]
+--- End Token: '+ in push argument' ---
+
+--- Testing Token: '1 in push argument' (with @jridgewell/trace-mapping) ---
+  WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
+  Target Generated  : TS Line 5, Col 24
+  Expected Original : Civet Line 5, Col 22
+  Actual Mapped     : Civet Line 5, Col 24 (Source: null/undefined)
+  Status            : FAILED (Column Mismatch)
+  Failure Reason    : Token '1 in push argument' in scenario 'Loop Construct (for...of)' COLUMN MISMATCH. Expected: Civet Line 5, Col 22. Actual: Civet Line 5, Col 24 (Source: null/undefined).
+  Raw VLQ for TS Line 5: AAChC,AAAA,EAAE,SAAS,CAAC,IAAI,CAAA,AAAC,IAAI,CAAC,CAAC,CAAC,CAAC,C
+  Decoded Segments for TS Line 5:
+    - Segment 1 ('AAChC'): [0, 0, 1, -32]
+    - Segment 2 ('AAAA'): [0, 0, 0, 0]
+    - Segment 3 ('EAAE'): [2, 0, 0, 2]
+    - Segment 4 ('SAAS'): [9, 0, 0, 9]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('IAAI'): [4, 0, 0, 4]
+    - Segment 7 ('CAAA'): [1, 0, 0, 0]
+    - Segment 8 ('AAAC'): [0, 0, 0, 1]
+    - Segment 9 ('IAAI'): [4, 0, 0, 4]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('C'): [1]
+--- End Token: '1 in push argument' ---
+
+--- Testing Token: 'processed in console.log' (with @jridgewell/trace-mapping) ---
+  WARNING: Mapped source ('') differs from expected ('Loop Construct (for...of).civet').
+  Target Generated  : TS Line 7, Col 12
   Expected Original : Civet Line 6, Col 12
-  Actual Mapped     : Civet Line 3, Col 0 (Source: null/undefined)
-  Status            : FAILED (Line Mismatch) + Column Mismatch
-  Failure Reason    : Token 'processed' in scenario 'Loop Construct (for...of)' LINE MISMATCH. Expected: Civet Line 6, Col 12. Actual: Civet Line 3, Col 0 (Source: null/undefined).
---- End Token: 'processed' ---
+  Actual Mapped     : Civet Line 6, Col 12 (Source: null/undefined)
+  Status            : PASSED
+--- End Token: 'processed in console.log' ---
 --- END SCENARIO: Loop Construct (for...of) ---
