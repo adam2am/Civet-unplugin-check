@@ -1,0 +1,608 @@
+import { compile } from '../source/main.civet'
+import assert from 'assert'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { TraceMap, originalPositionFor as jridgewellOriginalPositionFor, LEAST_UPPER_BOUND } from '@jridgewell/trace-mapping'
+
+// Define __dirname for ES modules
+__filename := fileURLToPath(import.meta.url)
+__dirname := path.dirname(__filename)
+
+// Generate log file path based on chosen library
+logFilePath := path.join(__dirname, `sourcemap-accuracy-usecases.log`)
+
+// Helper to clear and append to log file
+clearLog := () -> fs.writeFileSync(logFilePath, '', 'utf8')
+appendToLog := (content: string) -> fs.appendFileSync(logFilePath, content, 'utf8')
+
+interface TokenTest {
+  tokenDescription: string // For logging, e.g., "data in for loop"
+  
+  // ---- Location of the token in the GENERATED TypeScript code ----
+  generatedTSLine: number    // 1-based line number in the generated TS
+  generatedTSColumn: number  // 0-based column number for the start of the token in TS
+
+  // ---- Expected location in the ORIGINAL Civet code ----
+  expectedOriginalCivetLine: number   // 1-based
+  expectedOriginalCivetColumn: number // 0-based 
+  
+  // Optional: original token string if different from description, used for logging/verification
+  originalCivetTokenString?: string 
+}
+
+// VLQ Decoding Utilities (adapted from Civet's sourcemap.civet for standalone use in this test script)
+VLQ_SHIFT            := 5
+VLQ_CONTINUATION_BIT := 1 << VLQ_SHIFT
+VLQ_VALUE_MASK       := VLQ_CONTINUATION_BIT - 1
+
+BASE64_CHARS_DECODER := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+vlqTableDecoder := new Uint8Array(128)
+do
+  i .= 0
+  l .= vlqTableDecoder.length
+  while i < l
+    vlqTableDecoder[i] = 0xFF
+    i++
+  i = 0
+  l = BASE64_CHARS_DECODER.length
+  while i < l
+    vlqTableDecoder[BASE64_CHARS_DECODER.charCodeAt(i)] = i
+    i++
+
+decodeSingleVLQSegment := (mappingSegment: string): number[] ->
+  l .= mappingSegment.length
+  result: number[] .= []
+  currentMappingIndex .= 0
+
+  // Scan over the input segment
+  while currentMappingIndex < l
+    shift .= 0
+    vlq .= 0
+    v .= 0
+
+    while true
+      if currentMappingIndex >= l
+        throw new Error('Unexpected early end of VLQ mapping data in segment')
+      
+      char := mappingSegment.charCodeAt(currentMappingIndex)
+      if (char & 0x7F) != char // Check if it's a valid ASCII char
+        throw new Error(`Invalid mapping character code: ${char} in segment: ${mappingSegment}`)
+      
+      index := vlqTableDecoder[char & 0x7F]
+      if (index is 0xFF)
+        throw new Error(`Invalid mapping character: "${mappingSegment[currentMappingIndex]}" in segment: ${mappingSegment}`)
+      
+      currentMappingIndex++
+
+      // Decode the byte
+      vlq |= (index & VLQ_VALUE_MASK) << shift
+      shift += VLQ_SHIFT
+
+      // Stop if there's no continuation bit
+      break if (index & VLQ_CONTINUATION_BIT) is 0
+
+    // Recover the signed value
+    if vlq & 1
+      v = -(vlq >> 1)
+    else
+      v = vlq >> 1
+    result.push v
+  return result
+
+export { decodeSingleVLQSegment }
+
+describe "Civet Sourcemap Accuracy Usecases", ->
+  before ->
+    clearLog()
+    appendToLog("Civet Sourcemap Accuracy Usecases================================================\n")
+
+  runScenario := async (scenarioName: string, civetCode: string, tokenTests: TokenTest[]) ->
+    it scenarioName, async ->
+      scenarioLogCollector: string[] .= []
+      scenarioLogCollector.push(`\n\n\n--- BEGIN SCENARIO: ${scenarioName} ---`)
+      scenarioLogCollector.push("Input Civet Code:")
+      scenarioLogCollector.push(civetCode)
+
+      sourceFilename := `${scenarioName.replace(/[^a-zA-Z0-9_]/g, '-')}.civet` // Ensure valid filename
+
+      result := compile(civetCode, {
+        sync: true,
+        sourceMap: true,
+        js: false,
+        // sources: sourceFilename // Let compile populate sources based on filename
+        filename: sourceFilename
+      })
+      tsCode := result.code
+      outFilename := sourceFilename.replace('.civet', '.js')
+      mapJson := result.sourceMap.json(sourceFilename, outFilename) // Pass filename for sources array
+
+      scenarioLogCollector.push("\nGenerated TypeScript Code:")
+      scenarioLogCollector.push(tsCode)
+      scenarioLogCollector.push("\nGenerated Sourcemap JSON:")
+      scenarioLogCollector.push(JSON.stringify(mapJson, null, 2))
+      
+      // Normalize sourcemap sources and content
+      fixSources := () ->
+        // Fix missing or empty sources array
+        if !mapJson.sources?.length || !mapJson.sources[0]
+          mapJson.sources = [sourceFilename]
+        
+        // Fix missing or empty sourcesContent
+        if !mapJson.sourcesContent?.length || !mapJson.sourcesContent[0]
+          mapJson.sourcesContent = [civetCode]
+        // Handle source mismatch with content mismatch
+        else if mapJson.sources[0] !== sourceFilename && mapJson.sourcesContent[0] !== civetCode
+          if mapJson.sourcesContent[0] === civetCode
+            scenarioLogCollector.push(`\nNOTE: Source filename mismatch but content matches. Using existing content.`)
+          else
+            scenarioLogCollector.push(`\nWARNING: Both source filename and content mismatch. Forcing correct values.`)
+            mapJson.sources = [sourceFilename]
+            mapJson.sourcesContent = [civetCode]
+        // Handle correct source with wrong content
+        else if mapJson.sources[0] === sourceFilename && mapJson.sourcesContent[0] !== civetCode
+          scenarioLogCollector.push(`\nWARNING: Source filename correct but content mismatch. Fixing content.`)
+          mapJson.sourcesContent = [civetCode]
+      
+      fixSources()
+
+      appendToLog(scenarioLogCollector.join('\n') + '\n') 
+
+      tsLines := tsCode.split('\n')
+      logEntries: string[] .= ["\n--- TOKEN MAPPING VERIFICATION ---"]
+      failMessages: string[] .= []
+      scenarioStatus .= "PASSED" // Assume pass, will be set to FAILED on any token test failure
+
+      if mapJson.sources && mapJson.sources.length > 0 && mapJson.sources[0] !== sourceFilename
+          appendToLog(`[TEST-WARNING] mapJson.sources[0] ('${mapJson.sources[0]}') does not match expected sourceFilename ('${sourceFilename}'). This might indicate an issue in how Civet sets the source filename or how the test retrieves it.`)
+
+      let traceMap: TraceMap | undefined
+      try
+        traceMap = new TraceMap(mapJson) // TraceMap constructor accepts the raw JSON object
+        
+        verifyToken := (token: TokenTest): {status: string, details: string[], message: string | undefined} ->
+          log: string[] .= []
+          log.push(`\n--- Testing Token: '${token.tokenDescription}' ---`)
+          msgPrefix := `Token '${token.tokenDescription}' in scenario '${scenarioName}'`
+          genPosition := `TS Line ${token.generatedTSLine}, Col ${token.generatedTSColumn}`
+          let mappedPosition = "N/A"
+          expectedPosition := `Civet Line ${token.expectedOriginalCivetLine}, Col ${token.expectedOriginalCivetColumn}`
+          let status = "PASSED"
+          let errorMsg: string | undefined = undefined
+
+          tsLine := token.generatedTSLine    // 1-based
+          tsColumn := token.generatedTSColumn  // 0-based
+          
+          try
+            if tsLine <= 0 || tsLine > tsLines.length
+              status = `FAILED: Gen. TS Line ${tsLine} out of bounds (1-${tsLines.length}).`
+              errorMsg = `${msgPrefix} specified gen. TS line ${tsLine} out of bounds.`
+            else if tsColumn < 0 || tsColumn >= tsLines[tsLine - 1].length
+              status = `FAILED: Gen. TS Col ${tsColumn} out of bounds for line ${tsLine} (len ${tsLines[tsLine - 1].length}).`
+              errorMsg = `${msgPrefix} specified gen. TS col ${tsColumn} out of bounds for line ${tsLine}.`
+            else
+              const orig = jridgewellOriginalPositionFor(traceMap!, { line: tsLine, column: tsColumn, bias: LEAST_UPPER_BOUND })
+              mappedPosition = `Civet Line ${orig.line}, Col ${orig.column} (Source: ${orig.source || 'null/undefined'})`
+              
+              if (orig.source !== sourceFilename && orig.source !== null && orig.source !== undefined)
+                log.push(`  WARNING: Mapped source ('${orig.source}') differs from expected ('${sourceFilename}').`)
+              
+              if (orig.source === null || orig.source === undefined)
+                log.push(`  CRITICAL: Mapped source is null or undefined. This is the bug or related to it.`)
+                if (status === "PASSED") status = "FAILED (Undefined Source)" // Mark as failed for PR
+                if (!errorMsg) errorMsg = `${msgPrefix} Mapped source is null or undefined. Expected mapping to ${expectedPosition}.`
+              
+              if (orig.line == null || orig.column == null)
+                if (status === "PASSED") status = "FAILED (Null Original Position)"
+                if (!errorMsg) errorMsg = `${msgPrefix} Original line or column is null. Mapping: ${JSON.stringify(orig)}. Expected ${expectedPosition}.`
+              else
+                if (orig.line !== token.expectedOriginalCivetLine)
+                  if (status === "PASSED") status = `FAILED (Line Mismatch)`
+                  else if (!status.includes("Line Mismatch")) status += " + Line Mismatch"
+                  if (!errorMsg) errorMsg = `${msgPrefix} LINE MISMATCH. Expected: ${expectedPosition}. Actual: ${mappedPosition}.`
+                
+                if (orig.column !== token.expectedOriginalCivetColumn)
+                  if (status === "PASSED") status = `FAILED (Column Mismatch)`
+                  else if (!status.includes("Column Mismatch")) status += " + Column Mismatch"
+                  if (!errorMsg) errorMsg = `${msgPrefix} COLUMN MISMATCH. Expected: ${expectedPosition}. Actual: ${mappedPosition}.`
+          catch e: any
+            status = `FAILED (Exception: ${e.message})`
+            errorMsg = `${msgPrefix} EXCEPTION: ${e.message}`
+          finally
+            log.push(`  Target Generated  : ${genPosition}`)
+            log.push(`  Expected Original : ${expectedPosition}`)
+            log.push(`  Actual Mapped     : ${mappedPosition}`)
+            log.push(`  Status            : ${status}`)
+            if (errorMsg && status !== "PASSED") {
+              log.push(`  >>> Failure Reason: ${errorMsg}`)
+            }
+            if (status !== "PASSED") {
+              const mappingLines = mapJson.mappings.split(';');
+              const rawVLQ = (tsLine - 1 < mappingLines.length) ? mappingLines[tsLine - 1] : "[VLQ line out of bounds]"
+              log.push(`  Raw VLQ for Gen. TS Line ${tsLine}: ${rawVLQ}`);
+              if (rawVLQ && rawVLQ.length > 0 && rawVLQ !== "[VLQ line out of bounds]") {
+                log.push(`  Decoded Segments for Gen. TS Line ${tsLine}:`)
+                rawVLQ.split(',').forEach((segment: string, idx: number) => {
+                  try {
+                    decoded := decodeSingleVLQSegment(segment)
+                    log.push(`    - Segment ${idx + 1} ('${segment}'): [${decoded.join(', ')}]`)
+                  } catch (error: any) {
+                    log.push(`    - Segment ${idx + 1} ('${segment}'): FAILED TO DECODE (${error.message})`)
+                  }
+                })
+              }
+            }
+            log.push(`--- End Token: '${token.tokenDescription}' ---`)
+          return { status, details: log, message: errorMsg }
+
+        for testSpec of tokenTests
+             result := verifyToken(testSpec)
+             logEntries.push(result.details.join('\n'))
+             if (result.status !== "PASSED")
+               scenarioStatus = "FAILED"
+               if (result.message && !failMessages.includes(result.message)) 
+                 failMessages.push(result.message)
+      catch e: any
+         scenarioStatus = "FAILED"
+         failMessages.push(`Failed to create TraceMap instance or run tests: ${e.message}`)
+
+      statusMarker := if scenarioStatus == "PASSED" then "✅" else "🚧"
+      appendToLog(`\nSCENARIO OVERALL STATUS: ${statusMarker} ${scenarioStatus}\n`)
+      appendToLog(logEntries.join('\n') + '\n') 
+      appendToLog(`--- END SCENARIO: ${scenarioName} ---
+`)
+
+      // For PR, we want tests to fail if the bug is present.
+      // The `expectedOriginal...` fields in TokenTest should reflect the *correct* desired mapping.
+      // If `scenarioStatus` is "PASSED", it means Civet *correctly* mapped according to our expectations,
+      // implying the bug might be fixed or the test doesn't target it well.
+      // For this PR, we explicitly want to show failures, so if a test *passes*, we might note it, 
+      // but the `assert.fail` should be for when `scenarioStatus` is FAILED (bug demonstrated).
+      if (scenarioStatus !== "PASSED")
+        assert.fail(`🔴 Scenario '${scenarioName}' FAILED, demonstrating an expected sourcemap bug. First failure: ${failMessages[0] || 'Unknown failure'}`)
+      else
+        console.warn(`🟢 Scenario '${scenarioName}' PASSED. This means the targeted bug might not be present or the test is not specific enough to trigger it with current Civet version.`)
+
+
+  runScenario "Scenario_UltraSimple_PassExpected",
+    `// Civet L1
+a := 1 // Civet L2
+b := a // Civet L3
+`,
+    [
+      { 
+        tokenDescription: 'US: Variable "a" declaration', 
+        generatedTSLine: 2, // const a = 1;
+        generatedTSColumn: 6, // 'a'
+        expectedOriginalCivetLine: 2, 
+        expectedOriginalCivetColumn: 0  // 'a'
+      },
+      { 
+        tokenDescription: 'US: Literal "1" in a assignment', 
+        generatedTSLine: 2, // const a = 1;
+        generatedTSColumn: 10, // '1'
+        expectedOriginalCivetLine: 2, 
+        expectedOriginalCivetColumn: 5  // '1'
+      },
+      { 
+        tokenDescription: 'US: Variable "b" declaration', 
+        generatedTSLine: 3, // const b = a;
+        generatedTSColumn: 6, // 'b'
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 0  // 'b'
+      },
+      { 
+        tokenDescription: 'US: Variable "a" usage in b assignment', 
+        generatedTSLine: 3, // const b = a;
+        generatedTSColumn: 10, // 'a'
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 5  // 'a'
+      }
+    ]
+
+  runScenario "Scenario_RealWorld_UserProfile",
+    `// Civet L1
+// Simple user profile with name and age
+userName := "John Doe" // Civet L3
+userAge := 30 // Civet L4
+isAdult := userAge >= 18 // Civet L5
+
+displayProfile := -> // Civet L7
+  console.log "Name: #{userName}, Age: #{userAge}" // Civet L8
+  console.log "Adult: #{isAdult}" // Civet L9
+
+displayProfile() // Civet L11
+`,
+    [
+      { 
+        tokenDescription: 'RW: userName declaration', 
+        generatedTSLine: 3, 
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: userAge declaration', 
+        generatedTSLine: 4,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 4, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: isAdult boolean expression', 
+        generatedTSLine: 5, 
+        generatedTSColumn: 15,
+        expectedOriginalCivetLine: 5, 
+        expectedOriginalCivetColumn: 11
+      },
+      { 
+        tokenDescription: 'RW: displayProfile function declaration', 
+        generatedTSLine: 7,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 7, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: firstName usage in template string', 
+        generatedTSLine: 8,
+        generatedTSColumn: 34, 
+        expectedOriginalCivetLine: 8, 
+        expectedOriginalCivetColumn: 22
+      }
+    ]
+    
+  runScenario "Scenario_RealWorld_Calculator",
+    `// Civet L1
+// A simple calculator function
+calculate := (firstNumber, secondNumber, operation) -> // Civet L3
+  result := 0 // Civet L4
+  
+  if operation == "add" // Civet L6
+    result = firstNumber + secondNumber // Civet L7
+  else if operation == "subtract" // Civet L8
+    result = firstNumber - secondNumber // Civet L9
+  else if operation == "multiply" // Civet L10
+    result = firstNumber * secondNumber // Civet L11
+  else if operation == "divide" // Civet L12
+    if secondNumber == 0 // Civet L13
+      throw new Error("Cannot divide by zero") // Civet L14
+    else // Civet L15
+      result = firstNumber / secondNumber // Civet L16
+  
+  return result // Civet L18
+
+// Test the calculator
+sum := calculate(10, 5, "add") // Civet L21
+product := calculate(10, 5, "multiply") // Civet L22
+`,
+    [
+      { 
+        tokenDescription: 'RW: calculate function declaration', 
+        generatedTSLine: 3,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: firstNumber parameter declaration', 
+        generatedTSLine: 3,
+        generatedTSColumn: 17, 
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 12
+      },
+      { 
+        tokenDescription: 'RW: Addition operator in "add" branch', 
+        generatedTSLine: 7,
+        generatedTSColumn: 29, 
+        expectedOriginalCivetLine: 7, 
+        expectedOriginalCivetColumn: 22
+      },
+      { 
+        tokenDescription: 'RW: Error message string in throw statement', 
+        generatedTSLine: 14,
+        generatedTSColumn: 29, 
+        expectedOriginalCivetLine: 14, 
+        expectedOriginalCivetColumn: 24
+      },
+      { 
+        tokenDescription: 'RW: sum variable using calculate call', 
+        generatedTSLine: 21,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 21, 
+        expectedOriginalCivetColumn: 0
+      }
+    ]
+    
+  runScenario "Scenario_RealWorld_DOM_Component",
+    `// Civet L1
+// A simple UI component creator
+createButton := (buttonText, clickHandler) -> // Civet L3
+  button := document.createElement("button") // Civet L4
+  button.textContent = buttonText // Civet L5
+  button.classList.add("primary-button") // Civet L6
+  
+  button.addEventListener("click", clickHandler) // Civet L8
+  
+  return button // Civet L10
+
+addToDOM := (element, parentId) -> // Civet L12
+  parent := document.getElementById(parentId) // Civet L13
+  if parent 
+    parent.appendChild(element) // Civet L15
+  else
+    console.error("Parent element not found: #{parentId}") // Civet L17
+
+// Create and add a button
+submitButton := createButton("Submit", -> // Civet L20
+  console.log("Form submitted!") // Civet L21
+  // Process form data
+)
+
+addToDOM(submitButton, "form-container") // Civet L25
+`,
+    [
+      { 
+        tokenDescription: 'RW: createButton function declaration', 
+        generatedTSLine: 3,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: document.createElement call', 
+        generatedTSLine: 4,
+        generatedTSColumn: 30, 
+        expectedOriginalCivetLine: 4, 
+        expectedOriginalCivetColumn: 25
+      },
+      { 
+        tokenDescription: 'RW: addEventListener method call', 
+        generatedTSLine: 8,
+        generatedTSColumn: 26, 
+        expectedOriginalCivetLine: 8, 
+        expectedOriginalCivetColumn: 17
+      },
+      { 
+        tokenDescription: 'RW: submitButton declaration', 
+        generatedTSLine: 20,
+        generatedTSColumn: 6, 
+        expectedOriginalCivetLine: 20, 
+        expectedOriginalCivetColumn: 0
+      },
+      { 
+        tokenDescription: 'RW: Anonymous click handler function', 
+        generatedTSLine: 20,
+        generatedTSColumn: 35, 
+        expectedOriginalCivetLine: 20, 
+        expectedOriginalCivetColumn: 30
+      }
+    ]
+
+  runScenario "Scenario_BasicDefinitions_SimpleVars",
+    `// Civet L1
+// Simple variables with meaningful names
+count := 42 // Civet L3
+message := "Hello, world!" // Civet L4
+isActive := true // Civet L5
+
+// Using the variables
+doubledCount := count * 2 // Civet L8
+welcomeMessage := message + " Welcome!" // Civet L9
+`,
+    [
+      { 
+        tokenDescription: 'Basic: count variable declaration', 
+        generatedTSLine: 3,
+        generatedTSColumn: 6, // const 'c' in count
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 0  // 'c' in count
+      },
+      { 
+        tokenDescription: 'Basic: 42 literal in count assignment', 
+        generatedTSLine: 3,
+        generatedTSColumn: 14, // '4' in 42
+        expectedOriginalCivetLine: 3, 
+        expectedOriginalCivetColumn: 9  // '4' in 42
+      },
+      { 
+        tokenDescription: 'Basic: message string declaration', 
+        generatedTSLine: 4,
+        generatedTSColumn: 6, // 'm' in message
+        expectedOriginalCivetLine: 4, 
+        expectedOriginalCivetColumn: 0  // 'm' in message
+      },
+      { 
+        tokenDescription: 'Basic: isActive boolean declaration', 
+        generatedTSLine: 5,
+        generatedTSColumn: 6, // 'i' in isActive
+        expectedOriginalCivetLine: 5, 
+        expectedOriginalCivetColumn: 0  // 'i' in isActive
+      },
+      { 
+        tokenDescription: 'Basic: count usage in multiplication', 
+        generatedTSLine: 8,
+        generatedTSColumn: 21, // 'c' in count
+        expectedOriginalCivetLine: 8, 
+        expectedOriginalCivetColumn: 16  // 'c' in count
+      },
+      { 
+        tokenDescription: 'Basic: doubledCount declaration', 
+        generatedTSLine: 8,
+        generatedTSColumn: 6, // 'd' in doubledCount
+        expectedOriginalCivetLine: 8, 
+        expectedOriginalCivetColumn: 0  // 'd' in doubledCount
+      }
+    ]
+
+  runScenario "Scenario_StringLiteral_IndentedIf",
+    `// Civet L1
+condition := true         // Civet L2
+message := if condition   // Civet L3
+  "InsideIf"             // Civet L4: literal should map here
+else                       // Civet L5
+  "InsideElse"           // Civet L6: literal should map here
+`,
+    [
+      { 
+        tokenDescription: 'Indented If: "InsideIf" literal in if branch',
+        generatedTSLine: 5, // First quotation mark "
+        generatedTSColumn: 14, 
+        expectedOriginalCivetLine: 4,
+        expectedOriginalCivetColumn: 2
+      },
+      { 
+        tokenDescription: 'Indented If: "InsideElse" literal in else branch',
+        generatedTSLine: 7, 
+        generatedTSColumn: 14, 
+        expectedOriginalCivetLine: 6,
+        expectedOriginalCivetColumn: 2  
+      }
+    ]
+  
+  runScenario "Scenario_StringLiteral_BracketedIfElse",
+    `// Civet L1
+enable := false           // Civet L2
+value := if enable {      // Civet L3
+  "BracketedIf"           // Civet L4
+} else {                   // Civet L5
+  "BracketedElse"         // Civet L6
+}
+`,
+    [
+      { 
+        tokenDescription: 'Bracketed If: "BracketedIf" literal in if branch',
+        generatedTSLine: 5, // First quotation mark "
+        generatedTSColumn: 14, 
+        expectedOriginalCivetLine: 4,
+        expectedOriginalCivetColumn: 2
+      },
+      { 
+        tokenDescription: 'Bracketed If: "BracketedElse" literal in else branch',
+        generatedTSLine: 7, 
+        generatedTSColumn: 14, 
+        expectedOriginalCivetLine: 6,
+        expectedOriginalCivetColumn: 2  
+      }
+    ]
+
+  runScenario "Scenario_StringLiteral_TernaryOperator",
+    `// Civet L1
+hasAccess := false        // Civet L2
+output := hasAccess ? "Yes" : "No"  // Civet L3
+`,
+    [
+      { 
+        tokenDescription: 'Ternary: "Yes" literal in true branch',
+        generatedTSLine: 3, // const output = hasAccess ? "Yes" : "No";
+        generatedTSColumn: 25, // Target: First quotation mark of "Yes"
+        expectedOriginalCivetLine: 3,
+        expectedOriginalCivetColumn: 20 // Target: First quotation mark of "Yes"
+      },
+      { 
+        tokenDescription: 'Ternary: "No" literal in false branch',
+        generatedTSLine: 3, // const output = hasAccess ? "Yes" : "No";
+        generatedTSColumn: 33, // Target: First quotation mark of "No"
+        expectedOriginalCivetLine: 3,
+        expectedOriginalCivetColumn: 28  // Target: First quotation mark of "No"
+      }
+    ]

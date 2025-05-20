@@ -1,0 +1,946 @@
+Civet Sourcemap Accuracy Usecases================================================
+
+
+
+--- BEGIN SCENARIO: Scenario_UltraSimple_PassExpected ---
+Input Civet Code:
+// Civet L1
+a := 1 // Civet L2
+b := a // Civet L3
+
+
+Generated TypeScript Code:
+// Civet L1
+const a = 1 // Civet L2
+const b = a // Civet L3
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_UltraSimple_PassExpected.js",
+  "sources": [
+    "Scenario_UltraSimple_PassExpected.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACC,MAAD,CAAC,CAAC,CAAE,CAAC,CAAC,CAAC,WAAW;AAAlB,AACA,AAAC,MAAD,CAAC,CAAC,CAAE,CAAC,CAAC,CAAC,WAAW;AAAlB",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\na := 1 // Civet L2\nb := a // Civet L3\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: ✅ PASSED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'US: Variable "a" declaration' ---
+  Target Generated  : TS Line 2, Col 6
+  Expected Original : Civet Line 2, Col 0
+  Actual Mapped     : Civet Line 2, Col 0 (Source: Scenario_UltraSimple_PassExpected.civet)
+  Status            : PASSED
+--- End Token: 'US: Variable "a" declaration' ---
+
+--- Testing Token: 'US: Literal "1" in a assignment' ---
+  Target Generated  : TS Line 2, Col 10
+  Expected Original : Civet Line 2, Col 5
+  Actual Mapped     : Civet Line 2, Col 5 (Source: Scenario_UltraSimple_PassExpected.civet)
+  Status            : PASSED
+--- End Token: 'US: Literal "1" in a assignment' ---
+
+--- Testing Token: 'US: Variable "b" declaration' ---
+  Target Generated  : TS Line 3, Col 6
+  Expected Original : Civet Line 3, Col 0
+  Actual Mapped     : Civet Line 3, Col 0 (Source: Scenario_UltraSimple_PassExpected.civet)
+  Status            : PASSED
+--- End Token: 'US: Variable "b" declaration' ---
+
+--- Testing Token: 'US: Variable "a" usage in b assignment' ---
+  Target Generated  : TS Line 3, Col 10
+  Expected Original : Civet Line 3, Col 5
+  Actual Mapped     : Civet Line 3, Col 5 (Source: Scenario_UltraSimple_PassExpected.civet)
+  Status            : PASSED
+--- End Token: 'US: Variable "a" usage in b assignment' ---
+--- END SCENARIO: Scenario_UltraSimple_PassExpected ---
+
+
+
+--- BEGIN SCENARIO: Scenario_RealWorld_UserProfile ---
+Input Civet Code:
+// Civet L1
+// Simple user profile with name and age
+userName := "John Doe" // Civet L3
+userAge := 30 // Civet L4
+isAdult := userAge >= 18 // Civet L5
+
+displayProfile := -> // Civet L7
+  console.log "Name: #{userName}, Age: #{userAge}" // Civet L8
+  console.log "Adult: #{isAdult}" // Civet L9
+
+displayProfile() // Civet L11
+
+
+Generated TypeScript Code:
+// Civet L1
+// Simple user profile with name and age
+const userName = "John Doe" // Civet L3
+const userAge = 30 // Civet L4
+const isAdult = userAge >= 18 // Civet L5
+
+const displayProfile = function() { // Civet L7
+  console.log("Name: #{userName}, Age: #{userAge}") // Civet L8
+  return console.log("Adult: #{isAdult}")
+} // Civet L9
+
+displayProfile() // Civet L11
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_RealWorld_UserProfile.js",
+  "sources": [
+    "Scenario_RealWorld_UserProfile.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACA,wCAAwC;AAAxC,AACQ,MAAR,QAAQ,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,UAAA,CAAC,WAAW;AAAlC,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,EAAE,CAAC,WAAW;AAAzB,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,OAAO,CAAC,EAAE,CAAC,EAAE,CAAC,WAAW;AAApC,AACA;AAAA,AACA,AAAc,MAAd,cAAc,CAAC,CAAE,CAAC,QAAA,C,CAAE,CAAA,CAAA,CAAC,WAAW;AAAhC,AACA,EAAE,OAAO,CAAC,GAAG,CAAA,AAAA,CAAA,EAAA,GAAA,IAAA,KAAA,MAAA,OAAA,QAAA,SAAA,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,oBAAA,qBAAA,sBAAA,uBAAA,wBAAA,yBAAA,0BAAA,2BAAA,4BAAA,6BAAA,8BAAA,+BAAA,gCAAA,iCAAA,kCAAA,mCAAA,oCAAA,CAAA,CAAC,WAAW;AAA9D,AACA,E,OAAE,OAAO,CAAC,GAAG,CAAA,AAAA,CAAA,EAAA,GAAA,IAAA,KAAA,MAAA,OAAA,QAAA,SAAA,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,C;AAAA,CAAA,CAAC,WAAW;AAA7C,AACA;AAAA,AACA,AAAA,cAAc,CAAC,CAAC,CAAC,YAAY;AAA7B",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\n// Simple user profile with name and age\nuserName := \"John Doe\" // Civet L3\nuserAge := 30 // Civet L4\nisAdult := userAge >= 18 // Civet L5\n\ndisplayProfile := -> // Civet L7\n  console.log \"Name: #{userName}, Age: #{userAge}\" // Civet L8\n  console.log \"Adult: #{isAdult}\" // Civet L9\n\ndisplayProfile() // Civet L11\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'RW: userName declaration' ---
+  Target Generated  : TS Line 3, Col 6
+  Expected Original : Civet Line 3, Col 0
+  Actual Mapped     : Civet Line 3, Col 0 (Source: Scenario_RealWorld_UserProfile.civet)
+  Status            : PASSED
+--- End Token: 'RW: userName declaration' ---
+
+--- Testing Token: 'RW: userAge declaration' ---
+  Target Generated  : TS Line 4, Col 6
+  Expected Original : Civet Line 4, Col 0
+  Actual Mapped     : Civet Line 4, Col -11 (Source: Scenario_RealWorld_UserProfile.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: userAge declaration' in scenario 'Scenario_RealWorld_UserProfile' COLUMN MISMATCH. Expected: Civet Line 4, Col 0. Actual: Civet Line 4, Col -11 (Source: Scenario_RealWorld_UserProfile.civet).
+  Raw VLQ for Gen. TS Line 4: AAAlC,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,EAAE,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 4:
+    - Segment 1 ('AAAlC'): [0, 0, 0, -34]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAO'): [0, 0, 0, 7]
+    - Segment 4 ('MAAP'): [6, 0, 0, -7]
+    - Segment 5 ('OAAO'): [7, 0, 0, 7]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('EAAE'): [2, 0, 0, 2]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: userAge declaration' ---
+
+--- Testing Token: 'RW: isAdult boolean expression' ---
+  Target Generated  : TS Line 5, Col 15
+  Expected Original : Civet Line 5, Col 11
+  Actual Mapped     : Civet Line 5, Col -1 (Source: Scenario_RealWorld_UserProfile.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: isAdult boolean expression' in scenario 'Scenario_RealWorld_UserProfile' COLUMN MISMATCH. Expected: Civet Line 5, Col 11. Actual: Civet Line 5, Col -1 (Source: Scenario_RealWorld_UserProfile.civet).
+  Raw VLQ for Gen. TS Line 5: AAAzB,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,OAAO,CAAC,EAAE,CAAC,EAAE,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 5:
+    - Segment 1 ('AAAzB'): [0, 0, 0, -25]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAO'): [0, 0, 0, 7]
+    - Segment 4 ('MAAP'): [6, 0, 0, -7]
+    - Segment 5 ('OAAO'): [7, 0, 0, 7]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('OAAO'): [7, 0, 0, 7]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('EAAE'): [2, 0, 0, 2]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('EAAE'): [2, 0, 0, 2]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+    - Segment 15 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: isAdult boolean expression' ---
+
+--- Testing Token: 'RW: displayProfile function declaration' ---
+  Target Generated  : TS Line 7, Col 6
+  Expected Original : Civet Line 7, Col 0
+  Actual Mapped     : Civet Line 7, Col -11 (Source: Scenario_RealWorld_UserProfile.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: displayProfile function declaration' in scenario 'Scenario_RealWorld_UserProfile' COLUMN MISMATCH. Expected: Civet Line 7, Col 0. Actual: Civet Line 7, Col -11 (Source: Scenario_RealWorld_UserProfile.civet).
+  Raw VLQ for Gen. TS Line 7: AAAA,AACA,AAAc,MAAd,cAAc,CAAC,CAAE,CAAC,QAAA,C,CAAE,CAAA,CAAA,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAAA'): [0, 0, 0, 0]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAc'): [0, 0, 0, 14]
+    - Segment 4 ('MAAd'): [6, 0, 0, -14]
+    - Segment 5 ('cAAc'): [14, 0, 0, 14]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('QAAA'): [8, 0, 0, 0]
+    - Segment 10 ('C'): [1]
+    - Segment 11 ('CAAE'): [1, 0, 0, 2]
+    - Segment 12 ('CAAA'): [1, 0, 0, 0]
+    - Segment 13 ('CAAA'): [1, 0, 0, 0]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+    - Segment 15 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: displayProfile function declaration' ---
+
+--- Testing Token: 'RW: firstName usage in template string' ---
+  Target Generated  : TS Line 8, Col 34
+  Expected Original : Civet Line 8, Col 22
+  Actual Mapped     : Civet Line 8, Col 2 (Source: Scenario_RealWorld_UserProfile.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: firstName usage in template string' in scenario 'Scenario_RealWorld_UserProfile' COLUMN MISMATCH. Expected: Civet Line 8, Col 22. Actual: Civet Line 8, Col 2 (Source: Scenario_RealWorld_UserProfile.civet).
+  Raw VLQ for Gen. TS Line 8: AAAhC,AACA,EAAE,OAAO,CAAC,GAAG,CAAA,AAAA,CAAA,EAAA,GAAA,IAAA,KAAA,MAAA,OAAA,QAAA,SAAA,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,oBAAA,qBAAA,sBAAA,uBAAA,wBAAA,yBAAA,0BAAA,2BAAA,4BAAA,6BAAA,8BAAA,+BAAA,gCAAA,iCAAA,kCAAA,mCAAA,oCAAA,CAAA,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 8:
+    - Segment 1 ('AAAhC'): [0, 0, 0, -32]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAE'): [2, 0, 0, 2]
+    - Segment 4 ('OAAO'): [7, 0, 0, 7]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('GAAG'): [3, 0, 0, 3]
+    - Segment 7 ('CAAA'): [1, 0, 0, 0]
+    - Segment 8 ('AAAA'): [0, 0, 0, 0]
+    - Segment 9 ('CAAA'): [1, 0, 0, 0]
+    - Segment 10 ('EAAA'): [2, 0, 0, 0]
+    - Segment 11 ('GAAA'): [3, 0, 0, 0]
+    - Segment 12 ('IAAA'): [4, 0, 0, 0]
+    - Segment 13 ('KAAA'): [5, 0, 0, 0]
+    - Segment 14 ('MAAA'): [6, 0, 0, 0]
+    - Segment 15 ('OAAA'): [7, 0, 0, 0]
+    - Segment 16 ('QAAA'): [8, 0, 0, 0]
+    - Segment 17 ('SAAA'): [9, 0, 0, 0]
+    - Segment 18 ('UAAA'): [10, 0, 0, 0]
+    - Segment 19 ('WAAA'): [11, 0, 0, 0]
+    - Segment 20 ('YAAA'): [12, 0, 0, 0]
+    - Segment 21 ('aAAA'): [13, 0, 0, 0]
+    - Segment 22 ('cAAA'): [14, 0, 0, 0]
+    - Segment 23 ('eAAA'): [15, 0, 0, 0]
+    - Segment 24 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 25 ('iBAAA'): [17, 0, 0, 0]
+    - Segment 26 ('kBAAA'): [18, 0, 0, 0]
+    - Segment 27 ('mBAAA'): [19, 0, 0, 0]
+    - Segment 28 ('oBAAA'): [20, 0, 0, 0]
+    - Segment 29 ('qBAAA'): [21, 0, 0, 0]
+    - Segment 30 ('sBAAA'): [22, 0, 0, 0]
+    - Segment 31 ('uBAAA'): [23, 0, 0, 0]
+    - Segment 32 ('wBAAA'): [24, 0, 0, 0]
+    - Segment 33 ('yBAAA'): [25, 0, 0, 0]
+    - Segment 34 ('0BAAA'): [26, 0, 0, 0]
+    - Segment 35 ('2BAAA'): [27, 0, 0, 0]
+    - Segment 36 ('4BAAA'): [28, 0, 0, 0]
+    - Segment 37 ('6BAAA'): [29, 0, 0, 0]
+    - Segment 38 ('8BAAA'): [30, 0, 0, 0]
+    - Segment 39 ('+BAAA'): [31, 0, 0, 0]
+    - Segment 40 ('gCAAA'): [32, 0, 0, 0]
+    - Segment 41 ('iCAAA'): [33, 0, 0, 0]
+    - Segment 42 ('kCAAA'): [34, 0, 0, 0]
+    - Segment 43 ('mCAAA'): [35, 0, 0, 0]
+    - Segment 44 ('oCAAA'): [36, 0, 0, 0]
+    - Segment 45 ('CAAA'): [1, 0, 0, 0]
+    - Segment 46 ('CAAC'): [1, 0, 0, 1]
+    - Segment 47 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: firstName usage in template string' ---
+--- END SCENARIO: Scenario_RealWorld_UserProfile ---
+
+
+
+--- BEGIN SCENARIO: Scenario_RealWorld_Calculator ---
+Input Civet Code:
+// Civet L1
+// A simple calculator function
+calculate := (firstNumber, secondNumber, operation) -> // Civet L3
+  result := 0 // Civet L4
+  
+  if operation == "add" // Civet L6
+    result = firstNumber + secondNumber // Civet L7
+  else if operation == "subtract" // Civet L8
+    result = firstNumber - secondNumber // Civet L9
+  else if operation == "multiply" // Civet L10
+    result = firstNumber * secondNumber // Civet L11
+  else if operation == "divide" // Civet L12
+    if secondNumber == 0 // Civet L13
+      throw new Error("Cannot divide by zero") // Civet L14
+    else // Civet L15
+      result = firstNumber / secondNumber // Civet L16
+  
+  return result // Civet L18
+
+// Test the calculator
+sum := calculate(10, 5, "add") // Civet L21
+product := calculate(10, 5, "multiply") // Civet L22
+
+
+Generated TypeScript Code:
+// Civet L1
+// A simple calculator function
+const calculate = function(firstNumber, secondNumber, operation) { // Civet L3
+  const result = 0 // Civet L4
+  
+  if (operation == "add") { // Civet L6
+    result = firstNumber + secondNumber
+  } // Civet L7
+  else if (operation == "subtract") { // Civet L8
+    result = firstNumber - secondNumber
+  } // Civet L9
+  else if (operation == "multiply") { // Civet L10
+    result = firstNumber * secondNumber
+  } // Civet L11
+  else if (operation == "divide") { // Civet L12
+    if (secondNumber == 0) { // Civet L13
+      throw new Error("Cannot divide by zero")
+    } // Civet L14
+    else { // Civet L15
+      result = firstNumber / secondNumber
+    }
+  } // Civet L16
+  
+  return result
+} // Civet L18
+
+// Test the calculator
+const sum = calculate(10, 5, "add") // Civet L21
+const product = calculate(10, 5, "multiply") // Civet L22
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_RealWorld_Calculator.js",
+  "sources": [
+    "Scenario_RealWorld_Calculator.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACA,+BAA+B;AAA/B,AACS,MAAT,SAAS,CAAC,CAAE,CAAwC,QAAvC,CAAC,WAAW,CAAC,CAAC,YAAY,CAAC,CAAC,SAAS,CAAI,CAAA,CAAA,CAAC,WAAW;AAAlE,AACA,EAAQ,MAAN,MAAM,CAAC,CAAE,CAAC,CAAC,CAAC,WAAW;AAAzB,AACA,EAAE;AAAF,AACA,EAAE,GAAG,CAAA,SAAS,CAAC,EAAE,UAAA,WAAA,YAAA,aAAA,cAAA,KAAA,CAAA,CAAA,CAAA,CAAC,WAAW;AAAnC,AACA,IAAI,MAAM,C,CAAE,CAAC,WAAW,CAAC,CAAC,CAAC,Y;EAAY,CAAA,CAAC,WAAW;AAAnD,AACA,EAAE,IAAI,CAAC,GAAG,CAAA,SAAS,CAAC,EAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,UAAA,CAAA,CAAA,CAAA,CAAC,WAAW;AAA7C,AACA,IAAI,MAAM,C,CAAE,CAAC,WAAW,CAAC,CAAC,CAAC,Y;EAAY,CAAA,CAAC,WAAW;AAAnD,AACA,EAAE,IAAI,CAAC,GAAG,CAAA,SAAS,CAAC,EAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,UAAA,CAAA,CAAA,CAAA,CAAC,YAAY;AAA9C,AACA,IAAI,MAAM,C,CAAE,CAAC,WAAW,CAAC,CAAC,CAAC,Y;EAAY,CAAA,CAAC,YAAY;AAApD,AACA,EAAE,IAAI,CAAC,GAAG,CAAA,SAAS,CAAC,EAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,QAAA,CAAA,CAAA,CAAA,CAAC,YAAY;AAA5C,AACA,IAAI,GAAG,CAAA,YAAY,CAAC,EAAE,CAAC,CAAC,CAAA,CAAA,CAAA,CAAC,YAAY;AAArC,AACA,MAAM,KAAK,CAAC,GAAG,CAAC,KAAK,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,oHAAA,qHAAA,sHAAA,uHAAA,wHAAA,yHAAA,0HAAA,uBAAA,C;IAAC,CAAA,CAAC,YAAY;AAA3D,AACA,IAAI,IAAI,CAAA,CAAA,CAAC,YAAY;AAArB,AACA,MAAM,MAAM,C,CAAE,CAAC,WAAW,CAAC,CAAC,CAAC,Y;IAAY,C;EAAA,CAAA,CAAC,YAAY;AAAtD,AACA,EAAE;AAAF,AACA,EAAE,MAAM,CAAC,M;AAAM,CAAA,CAAC,YAAY;AAA5B,AACA;AAAA,AACA,sBAAsB;AAAtB,AACA,AAAG,MAAH,GAAG,CAAC,CAAE,CAAC,SAAS,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,KAAA,CAAC,CAAC,YAAY;AAA3C,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,CAAC,SAAS,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,UAAA,CAAC,CAAC,YAAY;AAApD",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\n// A simple calculator function\ncalculate := (firstNumber, secondNumber, operation) -> // Civet L3\n  result := 0 // Civet L4\n  \n  if operation == \"add\" // Civet L6\n    result = firstNumber + secondNumber // Civet L7\n  else if operation == \"subtract\" // Civet L8\n    result = firstNumber - secondNumber // Civet L9\n  else if operation == \"multiply\" // Civet L10\n    result = firstNumber * secondNumber // Civet L11\n  else if operation == \"divide\" // Civet L12\n    if secondNumber == 0 // Civet L13\n      throw new Error(\"Cannot divide by zero\") // Civet L14\n    else // Civet L15\n      result = firstNumber / secondNumber // Civet L16\n  \n  return result // Civet L18\n\n// Test the calculator\nsum := calculate(10, 5, \"add\") // Civet L21\nproduct := calculate(10, 5, \"multiply\") // Civet L22\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'RW: calculate function declaration' ---
+  Target Generated  : TS Line 3, Col 6
+  Expected Original : Civet Line 3, Col 0
+  Actual Mapped     : Civet Line 3, Col 0 (Source: Scenario_RealWorld_Calculator.civet)
+  Status            : PASSED
+--- End Token: 'RW: calculate function declaration' ---
+
+--- Testing Token: 'RW: firstNumber parameter declaration' ---
+  Target Generated  : TS Line 3, Col 17
+  Expected Original : Civet Line 3, Col 12
+  Actual Mapped     : Civet Line 3, Col 12 (Source: Scenario_RealWorld_Calculator.civet)
+  Status            : PASSED
+--- End Token: 'RW: firstNumber parameter declaration' ---
+
+--- Testing Token: 'RW: Addition operator in "add" branch' ---
+  CRITICAL: Mapped source is null or undefined. This is the bug or related to it.
+  Target Generated  : TS Line 7, Col 29
+  Expected Original : Civet Line 7, Col 22
+  Actual Mapped     : Civet Line null, Col null (Source: null/undefined)
+  Status            : FAILED (Undefined Source)
+  >>> Failure Reason: Token 'RW: Addition operator in "add" branch' in scenario 'Scenario_RealWorld_Calculator' Mapped source is null or undefined. Expected mapping to Civet Line 7, Col 22.
+  Raw VLQ for Gen. TS Line 7: AAAnC,AACA,IAAI,MAAM,C,CAAE,CAAC,WAAW,CAAC,CAAC,CAAC,Y
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAAnC'): [0, 0, 0, -35]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('IAAI'): [4, 0, 0, 4]
+    - Segment 4 ('MAAM'): [6, 0, 0, 6]
+    - Segment 5 ('C'): [1]
+    - Segment 6 ('CAAE'): [1, 0, 0, 2]
+    - Segment 7 ('CAAC'): [1, 0, 0, 1]
+    - Segment 8 ('WAAW'): [11, 0, 0, 11]
+    - Segment 9 ('CAAC'): [1, 0, 0, 1]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('Y'): [12]
+--- End Token: 'RW: Addition operator in "add" branch' ---
+
+--- Testing Token: 'RW: Error message string in throw statement' ---
+  Target Generated  : TS Line 14, Col 29
+  Expected Original : Civet Line 14, Col 24
+  Actual Mapped     : N/A
+  Status            : FAILED: Gen. TS Col 29 out of bounds for line 14 (len 16).
+  >>> Failure Reason: Token 'RW: Error message string in throw statement' in scenario 'Scenario_RealWorld_Calculator' specified gen. TS col 29 out of bounds for line 14.
+  Raw VLQ for Gen. TS Line 14: EAAY,CAAA,CAAC,YAAY
+  Decoded Segments for Gen. TS Line 14:
+    - Segment 1 ('EAAY'): [2, 0, 0, 12]
+    - Segment 2 ('CAAA'): [1, 0, 0, 0]
+    - Segment 3 ('CAAC'): [1, 0, 0, 1]
+    - Segment 4 ('YAAY'): [12, 0, 0, 12]
+--- End Token: 'RW: Error message string in throw statement' ---
+
+--- Testing Token: 'RW: sum variable using calculate call' ---
+  Target Generated  : TS Line 21, Col 6
+  Expected Original : Civet Line 21, Col 0
+  Actual Mapped     : N/A
+  Status            : FAILED: Gen. TS Col 6 out of bounds for line 21 (len 5).
+  >>> Failure Reason: Token 'RW: sum variable using calculate call' in scenario 'Scenario_RealWorld_Calculator' specified gen. TS col 6 out of bounds for line 21.
+  Raw VLQ for Gen. TS Line 21: IAAY,C
+  Decoded Segments for Gen. TS Line 21:
+    - Segment 1 ('IAAY'): [4, 0, 0, 12]
+    - Segment 2 ('C'): [1]
+--- End Token: 'RW: sum variable using calculate call' ---
+--- END SCENARIO: Scenario_RealWorld_Calculator ---
+
+
+
+--- BEGIN SCENARIO: Scenario_RealWorld_DOM_Component ---
+Input Civet Code:
+// Civet L1
+// A simple UI component creator
+createButton := (buttonText, clickHandler) -> // Civet L3
+  button := document.createElement("button") // Civet L4
+  button.textContent = buttonText // Civet L5
+  button.classList.add("primary-button") // Civet L6
+  
+  button.addEventListener("click", clickHandler) // Civet L8
+  
+  return button // Civet L10
+
+addToDOM := (element, parentId) -> // Civet L12
+  parent := document.getElementById(parentId) // Civet L13
+  if parent 
+    parent.appendChild(element) // Civet L15
+  else
+    console.error("Parent element not found: #{parentId}") // Civet L17
+
+// Create and add a button
+submitButton := createButton("Submit", -> // Civet L20
+  console.log("Form submitted!") // Civet L21
+  // Process form data
+)
+
+addToDOM(submitButton, "form-container") // Civet L25
+
+
+Generated TypeScript Code:
+// Civet L1
+// A simple UI component creator
+const createButton = function(buttonText, clickHandler) { // Civet L3
+  const button = document.createElement("button") // Civet L4
+  button.textContent = buttonText // Civet L5
+  button.classList.add("primary-button") // Civet L6
+  
+  button.addEventListener("click", clickHandler) // Civet L8
+  
+  return button
+} // Civet L10
+
+const addToDOM = function(element, parentId) { // Civet L12
+  const parent = document.getElementById(parentId) // Civet L13
+  if (parent) { 
+    return parent.appendChild(element)
+  } // Civet L15
+  else {
+    return console.error("Parent element not found: #{parentId}")
+  }
+} // Civet L17
+
+// Create and add a button
+const submitButton = createButton("Submit", function() { // Civet L20
+  return console.log("Form submitted!")
+} // Civet L21
+  // Process form data
+)
+
+addToDOM(submitButton, "form-container") // Civet L25
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_RealWorld_DOM_Component.js",
+  "sources": [
+    "Scenario_RealWorld_DOM_Component.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACA,gCAAgC;AAAhC,AACY,MAAZ,YAAY,CAAC,CAAE,CAA4B,QAA3B,CAAC,UAAU,CAAC,CAAC,YAAY,CAAI,CAAA,CAAA,CAAC,WAAW;AAAzD,AACA,EAAQ,MAAN,MAAM,CAAC,CAAE,CAAC,QAAQ,CAAC,aAAa,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,QAAA,CAAC,CAAC,WAAW;AAAxD,AACA,EAAE,MAAM,CAAC,WAAW,C,CAAE,CAAC,UAAU,CAAC,WAAW;AAA7C,AACA,EAAE,MAAM,CAAC,SAAS,CAAC,GAAG,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,gBAAA,CAAC,CAAC,WAAW;AAApD,AACA,EAAE;AAAF,AACA,EAAE,MAAM,CAAC,gBAAgB,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,OAAA,CAAC,CAAC,YAAY,CAAC,CAAC,WAAW;AAA5D,AACA,EAAE;AAAF,AACA,EAAE,MAAM,CAAC,M;AAAM,CAAA,CAAC,YAAY;AAA5B,AACA;AAAA,AACA,AAAQ,MAAR,QAAQ,CAAC,CAAE,CAAqB,QAApB,CAAC,OAAO,CAAC,CAAC,QAAQ,CAAI,CAAA,CAAA,CAAC,YAAY;AAA/C,AACA,EAAQ,MAAN,MAAM,CAAC,CAAE,CAAC,QAAQ,CAAC,cAAc,CAAC,QAAQ,CAAC,CAAC,YAAY;AAA1D,AACA,EAAE,GAAG,CAAA,MAAM,CAAA,CAAA,CAAA,CAAC;AAAZ,AACA,I,OAAI,MAAM,CAAC,WAAW,CAAC,OAAO,C;EAAC,CAAA,CAAC,YAAY;AAA5C,AACA,EAAE,IAAI,CAAA,CAAA;AAAN,AACA,I,OAAI,OAAO,CAAC,KAAK,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,oHAAA,qHAAA,sHAAA,uHAAA,wHAAA,yHAAA,0HAAA,2HAAA,4HAAA,6HAAA,8HAAA,+HAAA,gIAAA,iIAAA,kIAAA,mIAAA,oIAAA,qIAAA,sIAAA,uIAAA,wIAAA,yIAAA,0IAAA,uCAAA,C;EAAC,C;AAAA,CAAA,CAAC,YAAY;AAAvE,AACA;AAAA,AACA,0BAA0B;AAA1B,AACA,AAAY,MAAZ,YAAY,CAAC,CAAE,CAAC,YAAY,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,QAAA,CAAC,CAAC,QAAA,C,CAAE,CAAA,CAAA,CAAC,YAAY;AAAtD,AACA,E,OAAE,OAAO,CAAC,GAAG,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,oHAAA,iBAAA,C;AAAC,CAAA,CAAC,YAAY;AAA7C,EACE,oBAAoB;AAAtB,AACA,CAAC;AAAD,AACA;AAAA,AACA,AAAA,QAAQ,CAAC,YAAY,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,gBAAA,CAAC,CAAC,YAAY;AAArD",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\n// A simple UI component creator\ncreateButton := (buttonText, clickHandler) -> // Civet L3\n  button := document.createElement(\"button\") // Civet L4\n  button.textContent = buttonText // Civet L5\n  button.classList.add(\"primary-button\") // Civet L6\n  \n  button.addEventListener(\"click\", clickHandler) // Civet L8\n  \n  return button // Civet L10\n\naddToDOM := (element, parentId) -> // Civet L12\n  parent := document.getElementById(parentId) // Civet L13\n  if parent \n    parent.appendChild(element) // Civet L15\n  else\n    console.error(\"Parent element not found: #{parentId}\") // Civet L17\n\n// Create and add a button\nsubmitButton := createButton(\"Submit\", -> // Civet L20\n  console.log(\"Form submitted!\") // Civet L21\n  // Process form data\n)\n\naddToDOM(submitButton, \"form-container\") // Civet L25\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'RW: createButton function declaration' ---
+  Target Generated  : TS Line 3, Col 6
+  Expected Original : Civet Line 3, Col 0
+  Actual Mapped     : Civet Line 3, Col 0 (Source: Scenario_RealWorld_DOM_Component.civet)
+  Status            : PASSED
+--- End Token: 'RW: createButton function declaration' ---
+
+--- Testing Token: 'RW: document.createElement call' ---
+  Target Generated  : TS Line 4, Col 30
+  Expected Original : Civet Line 4, Col 25
+  Actual Mapped     : Civet Line 4, Col 34 (Source: Scenario_RealWorld_DOM_Component.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: document.createElement call' in scenario 'Scenario_RealWorld_DOM_Component' COLUMN MISMATCH. Expected: Civet Line 4, Col 25. Actual: Civet Line 4, Col 34 (Source: Scenario_RealWorld_DOM_Component.civet).
+  Raw VLQ for Gen. TS Line 4: AAAzD,AACA,EAAQ,MAAN,MAAM,CAAC,CAAE,CAAC,QAAQ,CAAC,aAAa,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,QAAA,CAAC,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 4:
+    - Segment 1 ('AAAzD'): [0, 0, 0, -57]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAQ'): [2, 0, 0, 8]
+    - Segment 4 ('MAAN'): [6, 0, 0, -6]
+    - Segment 5 ('MAAM'): [6, 0, 0, 6]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('QAAQ'): [8, 0, 0, 8]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('aAAa'): [13, 0, 0, 13]
+    - Segment 12 ('UAAA'): [10, 0, 0, 0]
+    - Segment 13 ('WAAA'): [11, 0, 0, 0]
+    - Segment 14 ('YAAA'): [12, 0, 0, 0]
+    - Segment 15 ('aAAA'): [13, 0, 0, 0]
+    - Segment 16 ('cAAA'): [14, 0, 0, 0]
+    - Segment 17 ('eAAA'): [15, 0, 0, 0]
+    - Segment 18 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 19 ('iBAAA'): [17, 0, 0, 0]
+    - Segment 20 ('QAAA'): [8, 0, 0, 0]
+    - Segment 21 ('CAAC'): [1, 0, 0, 1]
+    - Segment 22 ('CAAC'): [1, 0, 0, 1]
+    - Segment 23 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: document.createElement call' ---
+
+--- Testing Token: 'RW: addEventListener method call' ---
+  Target Generated  : TS Line 8, Col 26
+  Expected Original : Civet Line 8, Col 17
+  Actual Mapped     : Civet Line 8, Col -1 (Source: Scenario_RealWorld_DOM_Component.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'RW: addEventListener method call' in scenario 'Scenario_RealWorld_DOM_Component' COLUMN MISMATCH. Expected: Civet Line 8, Col 17. Actual: Civet Line 8, Col -1 (Source: Scenario_RealWorld_DOM_Component.civet).
+  Raw VLQ for Gen. TS Line 8: AAAF,AACA,EAAE,MAAM,CAAC,gBAAgB,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,OAAA,CAAC,CAAC,YAAY,CAAC,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 8:
+    - Segment 1 ('AAAF'): [0, 0, 0, -2]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAE'): [2, 0, 0, 2]
+    - Segment 4 ('MAAM'): [6, 0, 0, 6]
+    - Segment 5 ('CAAC'): [1, 0, 0, 1]
+    - Segment 6 ('gBAAgB'): [16, 0, 0, 16]
+    - Segment 7 ('UAAA'): [10, 0, 0, 0]
+    - Segment 8 ('WAAA'): [11, 0, 0, 0]
+    - Segment 9 ('YAAA'): [12, 0, 0, 0]
+    - Segment 10 ('aAAA'): [13, 0, 0, 0]
+    - Segment 11 ('cAAA'): [14, 0, 0, 0]
+    - Segment 12 ('eAAA'): [15, 0, 0, 0]
+    - Segment 13 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 14 ('OAAA'): [7, 0, 0, 0]
+    - Segment 15 ('CAAC'): [1, 0, 0, 1]
+    - Segment 16 ('CAAC'): [1, 0, 0, 1]
+    - Segment 17 ('YAAY'): [12, 0, 0, 12]
+    - Segment 18 ('CAAC'): [1, 0, 0, 1]
+    - Segment 19 ('CAAC'): [1, 0, 0, 1]
+    - Segment 20 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'RW: addEventListener method call' ---
+
+--- Testing Token: 'RW: submitButton declaration' ---
+  Target Generated  : TS Line 20, Col 6
+  Expected Original : Civet Line 20, Col 0
+  Actual Mapped     : N/A
+  Status            : FAILED: Gen. TS Col 6 out of bounds for line 20 (len 3).
+  >>> Failure Reason: Token 'RW: submitButton declaration' in scenario 'Scenario_RealWorld_DOM_Component' specified gen. TS col 6 out of bounds for line 20.
+  Raw VLQ for Gen. TS Line 20: EAAC,C
+  Decoded Segments for Gen. TS Line 20:
+    - Segment 1 ('EAAC'): [2, 0, 0, 1]
+    - Segment 2 ('C'): [1]
+--- End Token: 'RW: submitButton declaration' ---
+
+--- Testing Token: 'RW: Anonymous click handler function' ---
+  Target Generated  : TS Line 20, Col 35
+  Expected Original : Civet Line 20, Col 30
+  Actual Mapped     : N/A
+  Status            : FAILED: Gen. TS Col 35 out of bounds for line 20 (len 3).
+  >>> Failure Reason: Token 'RW: Anonymous click handler function' in scenario 'Scenario_RealWorld_DOM_Component' specified gen. TS col 35 out of bounds for line 20.
+  Raw VLQ for Gen. TS Line 20: EAAC,C
+  Decoded Segments for Gen. TS Line 20:
+    - Segment 1 ('EAAC'): [2, 0, 0, 1]
+    - Segment 2 ('C'): [1]
+--- End Token: 'RW: Anonymous click handler function' ---
+--- END SCENARIO: Scenario_RealWorld_DOM_Component ---
+
+
+
+--- BEGIN SCENARIO: Scenario_BasicDefinitions_SimpleVars ---
+Input Civet Code:
+// Civet L1
+// Simple variables with meaningful names
+count := 42 // Civet L3
+message := "Hello, world!" // Civet L4
+isActive := true // Civet L5
+
+// Using the variables
+doubledCount := count * 2 // Civet L8
+welcomeMessage := message + " Welcome!" // Civet L9
+
+
+Generated TypeScript Code:
+// Civet L1
+// Simple variables with meaningful names
+const count = 42 // Civet L3
+const message = "Hello, world!" // Civet L4
+const isActive = true // Civet L5
+
+// Using the variables
+const doubledCount = count * 2 // Civet L8
+const welcomeMessage = message + " Welcome!" // Civet L9
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_BasicDefinitions_SimpleVars.js",
+  "sources": [
+    "Scenario_BasicDefinitions_SimpleVars.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACA,yCAAyC;AAAzC,AACK,MAAL,KAAK,CAAC,CAAE,CAAC,EAAE,CAAC,WAAW;AAAvB,AACA,AAAO,MAAP,OAAO,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,eAAA,CAAC,WAAW;AAAtC,AACA,AAAQ,MAAR,QAAQ,CAAC,CAAE,CAAC,IAAI,CAAC,WAAW;AAA5B,AACA;AAAA,AACA,sBAAsB;AAAtB,AACA,AAAY,MAAZ,YAAY,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,WAAW;AAArC,AACA,AAAc,MAAd,cAAc,CAAC,CAAE,CAAC,OAAO,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,WAAA,CAAC,WAAW;AAAnD",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\n// Simple variables with meaningful names\ncount := 42 // Civet L3\nmessage := \"Hello, world!\" // Civet L4\nisActive := true // Civet L5\n\n// Using the variables\ndoubledCount := count * 2 // Civet L8\nwelcomeMessage := message + \" Welcome!\" // Civet L9\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Basic: count variable declaration' ---
+  Target Generated  : TS Line 3, Col 6
+  Expected Original : Civet Line 3, Col 0
+  Actual Mapped     : Civet Line 3, Col 0 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : PASSED
+--- End Token: 'Basic: count variable declaration' ---
+
+--- Testing Token: 'Basic: 42 literal in count assignment' ---
+  Target Generated  : TS Line 3, Col 14
+  Expected Original : Civet Line 3, Col 9
+  Actual Mapped     : Civet Line 3, Col 9 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : PASSED
+--- End Token: 'Basic: 42 literal in count assignment' ---
+
+--- Testing Token: 'Basic: message string declaration' ---
+  Target Generated  : TS Line 4, Col 6
+  Expected Original : Civet Line 4, Col 0
+  Actual Mapped     : Civet Line 4, Col 0 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : PASSED
+--- End Token: 'Basic: message string declaration' ---
+
+--- Testing Token: 'Basic: isActive boolean declaration' ---
+  Target Generated  : TS Line 5, Col 6
+  Expected Original : Civet Line 5, Col 0
+  Actual Mapped     : Civet Line 5, Col -16 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Basic: isActive boolean declaration' in scenario 'Scenario_BasicDefinitions_SimpleVars' COLUMN MISMATCH. Expected: Civet Line 5, Col 0. Actual: Civet Line 5, Col -16 (Source: Scenario_BasicDefinitions_SimpleVars.civet).
+  Raw VLQ for Gen. TS Line 5: AAAtC,AACA,AAAQ,MAAR,QAAQ,CAAC,CAAE,CAAC,IAAI,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 5:
+    - Segment 1 ('AAAtC'): [0, 0, 0, -38]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAQ'): [0, 0, 0, 8]
+    - Segment 4 ('MAAR'): [6, 0, 0, -8]
+    - Segment 5 ('QAAQ'): [8, 0, 0, 8]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('IAAI'): [4, 0, 0, 4]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Basic: isActive boolean declaration' ---
+
+--- Testing Token: 'Basic: count usage in multiplication' ---
+  Target Generated  : TS Line 8, Col 21
+  Expected Original : Civet Line 8, Col 16
+  Actual Mapped     : Civet Line 8, Col 0 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Basic: count usage in multiplication' in scenario 'Scenario_BasicDefinitions_SimpleVars' COLUMN MISMATCH. Expected: Civet Line 8, Col 16. Actual: Civet Line 8, Col 0 (Source: Scenario_BasicDefinitions_SimpleVars.civet).
+  Raw VLQ for Gen. TS Line 8: AAAtB,AACA,AAAY,MAAZ,YAAY,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 8:
+    - Segment 1 ('AAAtB'): [0, 0, 0, -22]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAY'): [0, 0, 0, 12]
+    - Segment 4 ('MAAZ'): [6, 0, 0, -12]
+    - Segment 5 ('YAAY'): [12, 0, 0, 12]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('KAAK'): [5, 0, 0, 5]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+    - Segment 15 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Basic: count usage in multiplication' ---
+
+--- Testing Token: 'Basic: doubledCount declaration' ---
+  Target Generated  : TS Line 8, Col 6
+  Expected Original : Civet Line 8, Col 0
+  Actual Mapped     : Civet Line 8, Col -16 (Source: Scenario_BasicDefinitions_SimpleVars.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Basic: doubledCount declaration' in scenario 'Scenario_BasicDefinitions_SimpleVars' COLUMN MISMATCH. Expected: Civet Line 8, Col 0. Actual: Civet Line 8, Col -16 (Source: Scenario_BasicDefinitions_SimpleVars.civet).
+  Raw VLQ for Gen. TS Line 8: AAAtB,AACA,AAAY,MAAZ,YAAY,CAAC,CAAE,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 8:
+    - Segment 1 ('AAAtB'): [0, 0, 0, -22]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAY'): [0, 0, 0, 12]
+    - Segment 4 ('MAAZ'): [6, 0, 0, -12]
+    - Segment 5 ('YAAY'): [12, 0, 0, 12]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('KAAK'): [5, 0, 0, 5]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('CAAC'): [1, 0, 0, 1]
+    - Segment 13 ('CAAC'): [1, 0, 0, 1]
+    - Segment 14 ('CAAC'): [1, 0, 0, 1]
+    - Segment 15 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Basic: doubledCount declaration' ---
+--- END SCENARIO: Scenario_BasicDefinitions_SimpleVars ---
+
+
+
+--- BEGIN SCENARIO: Scenario_StringLiteral_IndentedIf ---
+Input Civet Code:
+// Civet L1
+condition := true         // Civet L2
+message := if condition   // Civet L3
+  "InsideIf"             // Civet L4: literal should map here
+else                       // Civet L5
+  "InsideElse"           // Civet L6: literal should map here
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = true         // Civet L2
+let ref;if (condition) {   // Civet L3
+  ref = "InsideIf"
+}             // Civet L4: literal should map here
+else {                       // Civet L5
+  ref = "InsideElse"
+};const message =ref           // Civet L6: literal should map here
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_StringLiteral_IndentedIf.js",
+  "sources": [
+    "Scenario_StringLiteral_IndentedIf.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,IAAI,SAAS,WAAW;AAArC,AACA,I,G,CAAW,GAAG,CAAA,SAAS,CAAA,CAAA,CAAA,GAAG,WAAW;AAArC,AACA,E,G,8BAAwM,+BAAU,gCAAU,iCAAU,kCAAU,mCAAU,oCAAU,qCAAU,sCAAU,uCAAU,U;AAAtR,CAAA,aAAa,oCAAoC;AAA7D,AACA,AAAA,IAAI,CAAA,CAAA,uBAAuB,WAAW;AAAtC,AACA,E,G,8BAAwM,+BAAU,gCAAU,iCAAU,kCAAU,mCAAU,oCAAU,qCAAU,sCAAU,uCAAU,sTAAkxD,uTAAU,Y;AAAhjE,C,CAHP,MAAP,OAAO,CAAC,C,GAGM,WAAW,oCAAoC;AAA7D",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := true         // Civet L2\nmessage := if condition   // Civet L3\n  \"InsideIf\"             // Civet L4: literal should map here\nelse                       // Civet L5\n  \"InsideElse\"           // Civet L6: literal should map here\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Indented If: "InsideIf" literal in if branch' ---
+  Target Generated  : TS Line 5, Col 14
+  Expected Original : Civet Line 4, Col 2
+  Actual Mapped     : Civet Line 4, Col 25 (Source: Scenario_StringLiteral_IndentedIf.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Indented If: "InsideIf" literal in if branch' in scenario 'Scenario_StringLiteral_IndentedIf' COLUMN MISMATCH. Expected: Civet Line 4, Col 2. Actual: Civet Line 4, Col 25 (Source: Scenario_StringLiteral_IndentedIf.civet).
+  Raw VLQ for Gen. TS Line 5: AAAtR,CAAA,aAAa,oCAAoC
+  Decoded Segments for Gen. TS Line 5:
+    - Segment 1 ('AAAtR'): [0, 0, 0, -278]
+    - Segment 2 ('CAAA'): [1, 0, 0, 0]
+    - Segment 3 ('aAAa'): [13, 0, 0, 13]
+    - Segment 4 ('oCAAoC'): [36, 0, 0, 36]
+--- End Token: 'Indented If: "InsideIf" literal in if branch' ---
+
+--- Testing Token: 'Indented If: "InsideElse" literal in else branch' ---
+  Target Generated  : TS Line 7, Col 14
+  Expected Original : Civet Line 6, Col 2
+  Actual Mapped     : Civet Line 6, Col 200 (Source: Scenario_StringLiteral_IndentedIf.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Indented If: "InsideElse" literal in else branch' in scenario 'Scenario_StringLiteral_IndentedIf' COLUMN MISMATCH. Expected: Civet Line 6, Col 2. Actual: Civet Line 6, Col 200 (Source: Scenario_StringLiteral_IndentedIf.civet).
+  Raw VLQ for Gen. TS Line 7: AAAtC,AACA,E,G,8BAAwM,+BAAU,gCAAU,iCAAU,kCAAU,mCAAU,oCAAU,qCAAU,sCAAU,uCAAU,sTAAkxD,uTAAU,Y
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAAtC'): [0, 0, 0, -38]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('E'): [2]
+    - Segment 4 ('G'): [3]
+    - Segment 5 ('8BAAwM'): [30, 0, 0, 200]
+    - Segment 6 ('+BAAU'): [31, 0, 0, 10]
+    - Segment 7 ('gCAAU'): [32, 0, 0, 10]
+    - Segment 8 ('iCAAU'): [33, 0, 0, 10]
+    - Segment 9 ('kCAAU'): [34, 0, 0, 10]
+    - Segment 10 ('mCAAU'): [35, 0, 0, 10]
+    - Segment 11 ('oCAAU'): [36, 0, 0, 10]
+    - Segment 12 ('qCAAU'): [37, 0, 0, 10]
+    - Segment 13 ('sCAAU'): [38, 0, 0, 10]
+    - Segment 14 ('uCAAU'): [39, 0, 0, 10]
+    - Segment 15 ('sTAAkxD'): [310, 0, 0, 1810]
+    - Segment 16 ('uTAAU'): [311, 0, 0, 10]
+    - Segment 17 ('Y'): [12]
+--- End Token: 'Indented If: "InsideElse" literal in else branch' ---
+--- END SCENARIO: Scenario_StringLiteral_IndentedIf ---
+
+
+
+--- BEGIN SCENARIO: Scenario_StringLiteral_BracketedIfElse ---
+Input Civet Code:
+// Civet L1
+enable := false           // Civet L2
+value := if enable {      // Civet L3
+  "BracketedIf"           // Civet L4
+} else {                   // Civet L5
+  "BracketedElse"         // Civet L6
+}
+
+
+Generated TypeScript Code:
+// Civet L1
+const enable = false           // Civet L2
+let ref;if (enable) {      // Civet L3
+  ref = "BracketedIf"           // Civet L4
+} else {                   // Civet L5
+  ref = "BracketedElse"         // Civet L6
+};const value =ref
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_StringLiteral_BracketedIfElse.js",
+  "sources": [
+    "Scenario_StringLiteral_BracketedIfElse.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACM,MAAN,MAAM,CAAC,CAAE,CAAC,KAAK,WAAW,WAAW;AAArC,AACA,I,G,CAAS,GAAG,CAAA,MAAM,CAAA,CAAC,CAAC,MAAM,WAAW;AAArC,AACA,E,G,8BADwM,+BAAU,gCAAU,iCAAU,kCAAU,mCAAU,oCAAU,qCAAU,sCAAU,uCAAU,sTAAkxD,uTAAU,wTAAU,aACzjE,WAAW,WAAW;AAArC,AACA,CAAC,CAAC,IAAI,CAAC,CAAC,mBAAmB,WAAW;AAAtC,AACA,E,G,8BAAwM,+BAAU,gCAAU,iCAAU,kCAAU,mCAAU,oCAAU,qCAAU,sCAAU,uCAAU,sTAAkxD,uTAAU,wTAAU,yTAAU,0TAAU,eAA3kE,SAAS,WAAW;AAArC,AACA,C,CAJK,MAAL,KAAK,CAAC,C,GAIL;AAAD",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\nenable := false           // Civet L2\nvalue := if enable {      // Civet L3\n  \"BracketedIf\"           // Civet L4\n} else {                   // Civet L5\n  \"BracketedElse\"         // Civet L6\n}\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bracketed If: "BracketedIf" literal in if branch' ---
+  Target Generated  : TS Line 5, Col 14
+  Expected Original : Civet Line 4, Col 2
+  Actual Mapped     : Civet Line 5, Col 27 (Source: Scenario_StringLiteral_BracketedIfElse.civet)
+  Status            : FAILED (Line Mismatch) + Column Mismatch
+  >>> Failure Reason: Token 'Bracketed If: "BracketedIf" literal in if branch' in scenario 'Scenario_StringLiteral_BracketedIfElse' LINE MISMATCH. Expected: Civet Line 4, Col 2. Actual: Civet Line 5, Col 27 (Source: Scenario_StringLiteral_BracketedIfElse.civet).
+  Raw VLQ for Gen. TS Line 5: AAArC,AACA,CAAC,CAAC,IAAI,CAAC,CAAC,mBAAmB,WAAW
+  Decoded Segments for Gen. TS Line 5:
+    - Segment 1 ('AAArC'): [0, 0, 0, -37]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('CAAC'): [1, 0, 0, 1]
+    - Segment 4 ('CAAC'): [1, 0, 0, 1]
+    - Segment 5 ('IAAI'): [4, 0, 0, 4]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAC'): [1, 0, 0, 1]
+    - Segment 8 ('mBAAmB'): [19, 0, 0, 19]
+    - Segment 9 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Bracketed If: "BracketedIf" literal in if branch' ---
+
+--- Testing Token: 'Bracketed If: "BracketedElse" literal in else branch' ---
+  Target Generated  : TS Line 7, Col 14
+  Expected Original : Civet Line 6, Col 2
+  Actual Mapped     : Civet Line 3, Col 6 (Source: Scenario_StringLiteral_BracketedIfElse.civet)
+  Status            : FAILED (Line Mismatch) + Column Mismatch
+  >>> Failure Reason: Token 'Bracketed If: "BracketedElse" literal in else branch' in scenario 'Scenario_StringLiteral_BracketedIfElse' LINE MISMATCH. Expected: Civet Line 6, Col 2. Actual: Civet Line 3, Col 6 (Source: Scenario_StringLiteral_BracketedIfElse.civet).
+  Raw VLQ for Gen. TS Line 7: AAArC,AACA,C,CAJK,MAAL,KAAK,CAAC,C,GAIL
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAArC'): [0, 0, 0, -37]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('C'): [1]
+    - Segment 4 ('CAJK'): [1, 0, -4, 5]
+    - Segment 5 ('MAAL'): [6, 0, 0, -5]
+    - Segment 6 ('KAAK'): [5, 0, 0, 5]
+    - Segment 7 ('CAAC'): [1, 0, 0, 1]
+    - Segment 8 ('C'): [1]
+    - Segment 9 ('GAIL'): [3, 0, 4, -5]
+--- End Token: 'Bracketed If: "BracketedElse" literal in else branch' ---
+--- END SCENARIO: Scenario_StringLiteral_BracketedIfElse ---
+
+
+
+--- BEGIN SCENARIO: Scenario_StringLiteral_TernaryOperator ---
+Input Civet Code:
+// Civet L1
+hasAccess := false        // Civet L2
+output := hasAccess ? "Yes" : "No"  // Civet L3
+
+
+Generated TypeScript Code:
+// Civet L1
+const hasAccess = false        // Civet L2
+const output = hasAccess ? "Yes" : "No"  // Civet L3
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_StringLiteral_TernaryOperator.js",
+  "sources": [
+    "Scenario_StringLiteral_TernaryOperator.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,KAAK,QAAQ,WAAW;AAArC,AACA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,SAAS,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,KAAA,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,IAAA,EAAE,WAAW;AAA/C",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\nhasAccess := false        // Civet L2\noutput := hasAccess ? \"Yes\" : \"No\"  // Civet L3\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Ternary: "Yes" literal in true branch' ---
+  Target Generated  : TS Line 3, Col 25
+  Expected Original : Civet Line 3, Col 20
+  Actual Mapped     : Civet Line 3, Col 20 (Source: Scenario_StringLiteral_TernaryOperator.civet)
+  Status            : PASSED
+--- End Token: 'Ternary: "Yes" literal in true branch' ---
+
+--- Testing Token: 'Ternary: "No" literal in false branch' ---
+  Target Generated  : TS Line 3, Col 33
+  Expected Original : Civet Line 3, Col 28
+  Actual Mapped     : Civet Line 3, Col 21 (Source: Scenario_StringLiteral_TernaryOperator.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Ternary: "No" literal in false branch' in scenario 'Scenario_StringLiteral_TernaryOperator' COLUMN MISMATCH. Expected: Civet Line 3, Col 28. Actual: Civet Line 3, Col 21 (Source: Scenario_StringLiteral_TernaryOperator.civet).
+  Raw VLQ for Gen. TS Line 3: AAArC,AACA,AAAM,MAAN,MAAM,CAAC,CAAE,CAAC,SAAS,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,cAAA,KAAA,CAAC,CAAC,UAAA,WAAA,YAAA,aAAA,IAAA,EAAE,WAAW
+  Decoded Segments for Gen. TS Line 3:
+    - Segment 1 ('AAArC'): [0, 0, 0, -37]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAM'): [0, 0, 0, 6]
+    - Segment 4 ('MAAN'): [6, 0, 0, -6]
+    - Segment 5 ('MAAM'): [6, 0, 0, 6]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('CAAC'): [1, 0, 0, 1]
+    - Segment 9 ('SAAS'): [9, 0, 0, 9]
+    - Segment 10 ('CAAC'): [1, 0, 0, 1]
+    - Segment 11 ('CAAC'): [1, 0, 0, 1]
+    - Segment 12 ('UAAA'): [10, 0, 0, 0]
+    - Segment 13 ('WAAA'): [11, 0, 0, 0]
+    - Segment 14 ('YAAA'): [12, 0, 0, 0]
+    - Segment 15 ('aAAA'): [13, 0, 0, 0]
+    - Segment 16 ('cAAA'): [14, 0, 0, 0]
+    - Segment 17 ('KAAA'): [5, 0, 0, 0]
+    - Segment 18 ('CAAC'): [1, 0, 0, 1]
+    - Segment 19 ('CAAC'): [1, 0, 0, 1]
+    - Segment 20 ('UAAA'): [10, 0, 0, 0]
+    - Segment 21 ('WAAA'): [11, 0, 0, 0]
+    - Segment 22 ('YAAA'): [12, 0, 0, 0]
+    - Segment 23 ('aAAA'): [13, 0, 0, 0]
+    - Segment 24 ('IAAA'): [4, 0, 0, 0]
+    - Segment 25 ('EAAE'): [2, 0, 0, 2]
+    - Segment 26 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Ternary: "No" literal in false branch' ---
+--- END SCENARIO: Scenario_StringLiteral_TernaryOperator ---

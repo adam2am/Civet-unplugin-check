@@ -1,0 +1,349 @@
+Civet Sourcemap Accuracy 3 Bugs Cases================================================
+
+
+
+--- BEGIN SCENARIO: Scenario_Bug1_MissingMap_If_IntermediateVar ---
+Input Civet Code:
+// Civet L1
+condition := true // Civet L2
+message := if condition // Civet L3
+  intermediate := "AssignedInIf" // Civet L4: 'A' at col 17
+  intermediate // Civet L5
+else // Civet L6
+  "ElseValue" // Civet L7
+console.log message // Civet L8
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = true // Civet L2
+let ref;if (condition) { // Civet L3
+  const intermediate = "AssignedInIf" // Civet L4: 'A' at col 17
+  ref = intermediate
+} // Civet L5
+else { // Civet L6
+  ref = "ElseValue"
+};const message =ref // Civet L7
+console.log(message) // Civet L8
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_Bug1_MissingMap_If_IntermediateVar.js",
+  "sources": [
+    "Scenario_Bug1_MissingMap_If_IntermediateVar.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,IAAI,CAAC,WAAW;AAA7B,AACA,I,G,CAAW,GAAG,CAAA,SAAS,CAAA,CAAA,CAAA,CAAC,WAAW;AAAnC,AACA,EAAc,MAAZ,YAAY,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,cAAA,CAAC,0BAA0B;AAA3D,AACA,E,G,GAAE,Y;AAAY,CAAA,CAAC,WAAW;AAA1B,AACA,AAAA,IAAI,CAAA,CAAA,CAAC,WAAW;AAAhB,AACA,E,G,8BAAA,+BAAA,gCAAA,iCAAA,kCAAA,mCAAA,oCAAA,qCAAA,sCAAA,uCAAA,sTAAA,W;AAAA,C,CAJN,MAAP,OAAO,CAAC,C,GAIK,CAAC,WAAW;AAAzB,AACA,AAAA,OAAO,CAAC,GAAG,CAAA,AAAC,OAAO,CAAA,CAAC,WAAW;AAA/B",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := true // Civet L2\nmessage := if condition // Civet L3\n  intermediate := \"AssignedInIf\" // Civet L4: 'A' at col 17\n  intermediate // Civet L5\nelse // Civet L6\n  \"ElseValue\" // Civet L7\nconsole.log message // Civet L8\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bug1: Character "A" in "AssignedInIf"' ---
+  Target Generated  : TS Line 4, Col 24
+  Expected Original : Civet Line 4, Col 19
+  Actual Mapped     : Civet Line 4, Col 17 (Source: Scenario_Bug1_MissingMap_If_IntermediateVar.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Bug1: Character "A" in "AssignedInIf"' in scenario 'Scenario_Bug1_MissingMap_If_IntermediateVar' COLUMN MISMATCH. Expected: Civet Line 4, Col 19. Actual: Civet Line 4, Col 17 (Source: Scenario_Bug1_MissingMap_If_IntermediateVar.civet).
+  Raw VLQ for Gen. TS Line 4: AAAnC,AACA,EAAc,MAAZ,YAAY,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,cAAA,CAAC,0BAA0B
+  Decoded Segments for Gen. TS Line 4:
+    - Segment 1 ('AAAnC'): [0, 0, 0, -35]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAc'): [2, 0, 0, 14]
+    - Segment 4 ('MAAZ'): [6, 0, 0, -12]
+    - Segment 5 ('YAAY'): [12, 0, 0, 12]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('UAAA'): [10, 0, 0, 0]
+    - Segment 9 ('WAAA'): [11, 0, 0, 0]
+    - Segment 10 ('YAAA'): [12, 0, 0, 0]
+    - Segment 11 ('aAAA'): [13, 0, 0, 0]
+    - Segment 12 ('cAAA'): [14, 0, 0, 0]
+    - Segment 13 ('eAAA'): [15, 0, 0, 0]
+    - Segment 14 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 15 ('iBAAA'): [17, 0, 0, 0]
+    - Segment 16 ('kBAAA'): [18, 0, 0, 0]
+    - Segment 17 ('mBAAA'): [19, 0, 0, 0]
+    - Segment 18 ('8GAAA'): [110, 0, 0, 0]
+    - Segment 19 ('+GAAA'): [111, 0, 0, 0]
+    - Segment 20 ('gHAAA'): [112, 0, 0, 0]
+    - Segment 21 ('iHAAA'): [113, 0, 0, 0]
+    - Segment 22 ('cAAA'): [14, 0, 0, 0]
+    - Segment 23 ('CAAC'): [1, 0, 0, 1]
+    - Segment 24 ('0BAA0B'): [26, 0, 0, 26]
+--- End Token: 'Bug1: Character "A" in "AssignedInIf"' ---
+--- END SCENARIO: Scenario_Bug1_MissingMap_If_IntermediateVar ---
+
+
+
+--- BEGIN SCENARIO: Scenario_Bug1_MissingMap_Else_IntermediateVar ---
+Input Civet Code:
+// Civet L1
+condition := false // Civet L2
+message := if condition // Civet L3
+  "IfValue" // Civet L4
+else // Civet L5
+  intermediate := "AssignedInElse" // Civet L6: 'A' at col 17
+  intermediate // Civet L7
+console.log message // Civet L8
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = false // Civet L2
+let ref;if (condition) { // Civet L3
+  ref = "IfValue"
+} // Civet L4
+else { // Civet L5
+  const intermediate = "AssignedInElse" // Civet L6: 'A' at col 17
+  ref = intermediate
+};const message =ref // Civet L7
+console.log(message) // Civet L8
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_Bug1_MissingMap_Else_IntermediateVar.js",
+  "sources": [
+    "Scenario_Bug1_MissingMap_Else_IntermediateVar.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,KAAK,CAAC,WAAW;AAA9B,AACA,I,G,CAAW,GAAG,CAAA,SAAS,CAAA,CAAA,CAAA,CAAC,WAAW;AAAnC,AACA,E,G,8BAAA,+BAAA,gCAAA,iCAAA,kCAAA,mCAAA,oCAAA,qCAAA,sCAAA,S;AAAA,CAAA,CAAC,WAAW;AAAvB,AACA,AAAA,IAAI,CAAA,CAAA,CAAC,WAAW;AAAhB,AACA,EAAc,MAAZ,YAAY,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,gBAAA,CAAC,0BAA0B;AAA7D,AACA,E,G,GAAE,Y;AAAY,C,CAJP,MAAP,OAAO,CAAC,C,GAIM,CAAC,WAAW;AAA1B,AACA,AAAA,OAAO,CAAC,GAAG,CAAA,AAAC,OAAO,CAAA,CAAC,WAAW;AAA/B",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := false // Civet L2\nmessage := if condition // Civet L3\n  \"IfValue\" // Civet L4\nelse // Civet L5\n  intermediate := \"AssignedInElse\" // Civet L6: 'A' at col 17\n  intermediate // Civet L7\nconsole.log message // Civet L8\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bug1: Literal "AssignedInElse" in else branch via intermediate var' ---
+  Target Generated  : TS Line 6, Col 17
+  Expected Original : Civet Line 6, Col 17
+  Actual Mapped     : Civet Line 5, Col 5 (Source: Scenario_Bug1_MissingMap_Else_IntermediateVar.civet)
+  Status            : FAILED (Line Mismatch) + Column Mismatch
+  >>> Failure Reason: Token 'Bug1: Literal "AssignedInElse" in else branch via intermediate var' in scenario 'Scenario_Bug1_MissingMap_Else_IntermediateVar' LINE MISMATCH. Expected: Civet Line 6, Col 17. Actual: Civet Line 5, Col 5 (Source: Scenario_Bug1_MissingMap_Else_IntermediateVar.civet).
+  Raw VLQ for Gen. TS Line 6: AAAvB,AACA,AAAA,IAAI,CAAA,CAAA,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 6:
+    - Segment 1 ('AAAvB'): [0, 0, 0, -23]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAA'): [0, 0, 0, 0]
+    - Segment 4 ('IAAI'): [4, 0, 0, 4]
+    - Segment 5 ('CAAA'): [1, 0, 0, 0]
+    - Segment 6 ('CAAA'): [1, 0, 0, 0]
+    - Segment 7 ('CAAC'): [1, 0, 0, 1]
+    - Segment 8 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Bug1: Literal "AssignedInElse" in else branch via intermediate var' ---
+--- END SCENARIO: Scenario_Bug1_MissingMap_Else_IntermediateVar ---
+
+
+
+--- BEGIN SCENARIO: Scenario_Bug2_IncompleteMap_If_DirectAssign ---
+Input Civet Code:
+// Civet L1
+condition := true // Civet L2
+outputVar := "" // Civet L3
+if condition // Civet L4
+  outputVar := "InsideIf" // Civet L5: 'I' at col 14. Expected map to here, not col of '='.
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = true // Civet L2
+const outputVar = "" // Civet L3
+if (condition) { // Civet L4
+  const outputVar = "InsideIf"
+} // Civet L5: 'I' at col 14. Expected map to here, not col of '='.
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_Bug2_IncompleteMap_If_DirectAssign.js",
+  "sources": [
+    "Scenario_Bug2_IncompleteMap_If_DirectAssign.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,IAAI,CAAC,WAAW;AAA7B,AACA,AAAS,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,EAAA,CAAC,WAAW;AAA3B,AACA,AAAA,GAAG,CAAA,SAAS,CAAA,CAAA,CAAA,CAAC,WAAW;AAAxB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,U;AAAA,CAAA,CAAC,iEAAiE;AAA3F",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := true // Civet L2\noutputVar := \"\" // Civet L3\nif condition // Civet L4\n  outputVar := \"InsideIf\" // Civet L5: 'I' at col 14. Expected map to here, not col of '='.\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bug2: Literal "InsideIf" direct assign in if branch' ---
+  Target Generated  : TS Line 5, Col 15
+  Expected Original : Civet Line 5, Col 14
+  Actual Mapped     : Civet Line 5, Col 8 (Source: Scenario_Bug2_IncompleteMap_If_DirectAssign.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Bug2: Literal "InsideIf" direct assign in if branch' in scenario 'Scenario_Bug2_IncompleteMap_If_DirectAssign' COLUMN MISMATCH. Expected: Civet Line 5, Col 14. Actual: Civet Line 5, Col 8 (Source: Scenario_Bug2_IncompleteMap_If_DirectAssign.civet).
+  Raw VLQ for Gen. TS Line 5: AAAxB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,U
+  Decoded Segments for Gen. TS Line 5:
+    - Segment 1 ('AAAxB'): [0, 0, 0, -24]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAW'): [2, 0, 0, 11]
+    - Segment 4 ('MAAT'): [6, 0, 0, -9]
+    - Segment 5 ('SAAS'): [9, 0, 0, 9]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('UAAA'): [10, 0, 0, 0]
+    - Segment 9 ('WAAA'): [11, 0, 0, 0]
+    - Segment 10 ('YAAA'): [12, 0, 0, 0]
+    - Segment 11 ('aAAA'): [13, 0, 0, 0]
+    - Segment 12 ('cAAA'): [14, 0, 0, 0]
+    - Segment 13 ('eAAA'): [15, 0, 0, 0]
+    - Segment 14 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 15 ('iBAAA'): [17, 0, 0, 0]
+    - Segment 16 ('kBAAA'): [18, 0, 0, 0]
+    - Segment 17 ('mBAAA'): [19, 0, 0, 0]
+    - Segment 18 ('U'): [10]
+--- End Token: 'Bug2: Literal "InsideIf" direct assign in if branch' ---
+--- END SCENARIO: Scenario_Bug2_IncompleteMap_If_DirectAssign ---
+
+
+
+--- BEGIN SCENARIO: Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign ---
+Input Civet Code:
+// Civet L1
+condition := false // Civet L2
+outputVar := "" // Civet L3
+if condition { // Civet L4
+  outputVar := "ValueIf"
+} else { // Civet L6
+  outputVar := "ValueElse" // Civet L7: 'V' at col 14. Expected map to here.
+}
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = false // Civet L2
+const outputVar = "" // Civet L3
+if (condition) { // Civet L4
+  const outputVar = "ValueIf"
+} else { // Civet L6
+  const outputVar = "ValueElse" // Civet L7: 'V' at col 14. Expected map to here.
+}
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign.js",
+  "sources": [
+    "Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,KAAK,CAAC,WAAW;AAA9B,AACA,AAAS,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,EAAA,CAAC,WAAW;AAA3B,AACA,AAAA,GAAG,CAAA,SAAS,CAAA,CAAC,CAAC,CAAC,WAAW;AAA1B,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,SAAA;AAAxB,AACA,CAAC,CAAC,IAAI,CAAC,CAAC,CAAC,WAAW;AAApB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,WAAA,CAAC,iDAAiD;AAA5E,AACA,CAAC;AAAD",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := false // Civet L2\noutputVar := \"\" // Civet L3\nif condition { // Civet L4\n  outputVar := \"ValueIf\"\n} else { // Civet L6\n  outputVar := \"ValueElse\" // Civet L7: 'V' at col 14. Expected map to here.\n}\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bug2: Literal "ValueElse" direct assign in bracketed else' ---
+  Target Generated  : TS Line 7, Col 15
+  Expected Original : Civet Line 7, Col 14
+  Actual Mapped     : Civet Line 7, Col -2 (Source: Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign.civet)
+  Status            : FAILED (Column Mismatch)
+  >>> Failure Reason: Token 'Bug2: Literal "ValueElse" direct assign in bracketed else' in scenario 'Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign' COLUMN MISMATCH. Expected: Civet Line 7, Col 14. Actual: Civet Line 7, Col -2 (Source: Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign.civet).
+  Raw VLQ for Gen. TS Line 7: AAApB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,WAAA,CAAC,iDAAiD
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAApB'): [0, 0, 0, -20]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('EAAW'): [2, 0, 0, 11]
+    - Segment 4 ('MAAT'): [6, 0, 0, -9]
+    - Segment 5 ('SAAS'): [9, 0, 0, 9]
+    - Segment 6 ('CAAC'): [1, 0, 0, 1]
+    - Segment 7 ('CAAE'): [1, 0, 0, 2]
+    - Segment 8 ('UAAA'): [10, 0, 0, 0]
+    - Segment 9 ('WAAA'): [11, 0, 0, 0]
+    - Segment 10 ('YAAA'): [12, 0, 0, 0]
+    - Segment 11 ('aAAA'): [13, 0, 0, 0]
+    - Segment 12 ('cAAA'): [14, 0, 0, 0]
+    - Segment 13 ('eAAA'): [15, 0, 0, 0]
+    - Segment 14 ('gBAAA'): [16, 0, 0, 0]
+    - Segment 15 ('iBAAA'): [17, 0, 0, 0]
+    - Segment 16 ('kBAAA'): [18, 0, 0, 0]
+    - Segment 17 ('mBAAA'): [19, 0, 0, 0]
+    - Segment 18 ('8GAAA'): [110, 0, 0, 0]
+    - Segment 19 ('WAAA'): [11, 0, 0, 0]
+    - Segment 20 ('CAAC'): [1, 0, 0, 1]
+    - Segment 21 ('iDAAiD'): [49, 0, 0, 49]
+--- End Token: 'Bug2: Literal "ValueElse" direct assign in bracketed else' ---
+--- END SCENARIO: Scenario_Bug2_IncompleteMap_BracketedElse_DirectAssign ---
+
+
+
+--- BEGIN SCENARIO: Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign ---
+Input Civet Code:
+// Civet L1
+condition := false // Civet L2
+outputVar := "" // Civet L3
+if condition // Civet L4
+  outputVar := "ValueIf" // Civet L5
+else // Civet L6
+  outputVar := "ValueElseInIndented" // Civet L7: 'V' at col 14. Expected map to here, not to 'else' keyword.
+
+
+Generated TypeScript Code:
+// Civet L1
+const condition = false // Civet L2
+const outputVar = "" // Civet L3
+if (condition) { // Civet L4
+  const outputVar = "ValueIf"
+} // Civet L5
+else { // Civet L6
+  const outputVar = "ValueElseInIndented"
+} // Civet L7: 'V' at col 14. Expected map to here, not to 'else' keyword.
+
+
+Generated Sourcemap JSON:
+{
+  "version": 3,
+  "file": "Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign.js",
+  "sources": [
+    "Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign.civet"
+  ],
+  "mappings": "AAAA,WAAW;AAAX,AACS,MAAT,SAAS,CAAC,CAAE,CAAC,KAAK,CAAC,WAAW;AAA9B,AACA,AAAS,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,EAAA,CAAC,WAAW;AAA3B,AACA,AAAA,GAAG,CAAA,SAAS,CAAA,CAAA,CAAA,CAAC,WAAW;AAAxB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,S;AAAA,CAAA,CAAC,WAAW;AAApC,AACA,AAAA,IAAI,CAAA,CAAA,CAAC,WAAW;AAAhB,AACA,EAAW,MAAT,SAAS,CAAC,CAAE,UAAA,WAAA,YAAA,aAAA,cAAA,eAAA,gBAAA,iBAAA,kBAAA,mBAAA,8GAAA,+GAAA,gHAAA,iHAAA,kHAAA,mHAAA,oHAAA,qHAAA,sHAAA,uHAAA,wHAAA,qB;AAAA,CAAA,CAAC,wEAAwE;AAA7G",
+  "names": [],
+  "sourcesContent": [
+    "// Civet L1\ncondition := false // Civet L2\noutputVar := \"\" // Civet L3\nif condition // Civet L4\n  outputVar := \"ValueIf\" // Civet L5\nelse // Civet L6\n  outputVar := \"ValueElseInIndented\" // Civet L7: 'V' at col 14. Expected map to here, not to 'else' keyword.\n"
+  ]
+}
+
+SCENARIO OVERALL STATUS: 🚧 FAILED
+
+--- TOKEN MAPPING VERIFICATION ---
+
+--- Testing Token: 'Bug3: Literal "ValueElseInIndented" direct assign in indented else' ---
+  Target Generated  : TS Line 7, Col 15
+  Expected Original : Civet Line 7, Col 14
+  Actual Mapped     : Civet Line 6, Col 3 (Source: Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign.civet)
+  Status            : FAILED (Line Mismatch) + Column Mismatch
+  >>> Failure Reason: Token 'Bug3: Literal "ValueElseInIndented" direct assign in indented else' in scenario 'Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign' LINE MISMATCH. Expected: Civet Line 7, Col 14. Actual: Civet Line 6, Col 3 (Source: Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign.civet).
+  Raw VLQ for Gen. TS Line 7: AAApC,AACA,AAAA,IAAI,CAAA,CAAA,CAAC,WAAW
+  Decoded Segments for Gen. TS Line 7:
+    - Segment 1 ('AAApC'): [0, 0, 0, -36]
+    - Segment 2 ('AACA'): [0, 0, 1, 0]
+    - Segment 3 ('AAAA'): [0, 0, 0, 0]
+    - Segment 4 ('IAAI'): [4, 0, 0, 4]
+    - Segment 5 ('CAAA'): [1, 0, 0, 0]
+    - Segment 6 ('CAAA'): [1, 0, 0, 0]
+    - Segment 7 ('CAAC'): [1, 0, 0, 1]
+    - Segment 8 ('WAAW'): [11, 0, 0, 11]
+--- End Token: 'Bug3: Literal "ValueElseInIndented" direct assign in indented else' ---
+--- END SCENARIO: Scenario_Bug3_MisalignedMap_IndentedElse_DirectAssign ---
